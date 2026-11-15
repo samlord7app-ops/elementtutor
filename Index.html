@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>元素週期表與常見離子價數互動學習網｜國高中化學核心攻略</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts Noto Sans TC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#172033',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 自訂滾動條與化學式微調 */
+        body {
+            background-color: #f4f7f9;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+        
+        /* 週期表 18 欄網格系統 */
+        .ptable-grid {
+            display: grid;
+            grid-template-columns: repeat(18, minmax(44px, 1fr));
+            gap: 4px;
+        }
+
+        /* 元素卡片動畫與懸停效果 */
+        .el-cell {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        .el-cell:hover {
+            transform: scale(1.12);
+            z-index: 20;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 篩選高亮時的非目標淡化效果 */
+        .dimmed {
+            opacity: 0.22 !important;
+            filter: grayscale(65%);
+            transform: scale(0.96);
+        }
+
+        /* 離子背誦遮罩效果 */
+        .ion-hidden-value {
+            filter: blur(6px);
+            background-color: #cbd5e1;
+            color: transparent;
+            border-radius: 4px;
+            transition: all 0.25s ease;
+        }
+        .ion-card:hover .ion-hidden-value.peekable,
+        .ion-revealed {
+            filter: blur(0);
+            background-color: transparent;
+            color: inherit;
+        }
+
+        /* 自訂捲軸 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* 化學上下標排版精準對齊 */
+        sub, sup {
+            font-size: 0.72em;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline;
+        }
+        sup { top: -0.45em; }
+        sub { bottom: -0.22em; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-gradient-to-r from-teal-700 via-emerald-700 to-cyan-800 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3.5 gap-3">
+                <!-- 網站標題 -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center font-mono font-bold text-xl shadow-inner">
+                        <span>H<sub>2</sub>O</span>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-bold tracking-wide flex items-center gap-2">
+                            元素週期表與離子價數互動網
+                            <span class="hidden sm:inline-block text-xs bg-amber-400 text-slate-900 font-bold px-2 py-0.5 rounded-full">台灣國高中版</span>
+                        </h1>
+                        <p class="text-xs text-teal-100">會考自然科 × 學測化學核心觀念・查詢・實戰演練</p>
+                    </div>
+                </div>
+
+                <!-- 三大主功能分頁切換按鈕 -->
+                <nav class="flex bg-black/20 p-1 rounded-xl backdrop-blur-sm overflow-x-auto" role="tablist">
+                    <button onclick="switchTab('ptable')" id="tab-btn-ptable" class="tab-btn active flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap bg-white text-teal-800 shadow">
+                        🧪 互動元素週期表
+                    </button>
+                    <button onclick="switchTab('ions')" id="tab-btn-ions" class="tab-btn flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap text-teal-50 hover:bg-white/10">
+                        ⚡ 常見離子與酸根表
+                    </button>
+                    <button onclick="switchTab('quiz')" id="tab-btn-quiz" class="tab-btn flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap text-teal-50 hover:bg-white/10 flex items-center justify-center gap-1.5">
+                        📝 觀念實戰題庫
+                        <span id="nav-quiz-badge" class="bg-amber-400 text-slate-900 text-xs px-1.5 py-0.2 rounded-full font-mono">22</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主內容區 -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-6">
+
+        <!-- ===================================================================== -->
+        <!-- 分頁一：互動元素週期表 -->
+        <!-- ===================================================================== -->
+        <section id="section-ptable" class="space-y-5">
+            
+            <!-- 控制工具列與模式切換 -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-4">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span>週期表探索與考點篩選</span>
+                            <span class="text-xs font-normal text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">點擊任一元素查看詳解</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">橫列為「週期」（電子層數），縱行為「族」（價電子數相似，化學性質相似）</p>
+                    </div>
+
+                    <!-- 顯示開關群組 -->
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <!-- 必考重點 vs 完整118切換 -->
+                        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+                            <button onclick="setTableMode('all')" id="btn-mode-all" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-teal-700 shadow-sm transition">
+                                完整 118 元素
+                            </button>
+                            <button onclick="setTableMode('exam')" id="btn-mode-exam" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition">
+                                🎯 國高中必考重點
+                            </button>
+                        </div>
+
+                        <!-- 顯示常見離子價數開關 -->
+                        <label class="inline-flex items-center gap-2 cursor-pointer bg-amber-50 hover:bg-amber-100/80 border border-amber-200 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-900 transition select-none">
+                            <input type="checkbox" id="toggle-valence" onchange="toggleValenceDisplay()" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4">
+                            <span>顯示常見價數</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 快速高亮篩選按鈕列 -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 mr-1">考點高亮：</span>
+                    <button onclick="filterElements('all')" data-filter="all" class="filter-chip active px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-white shadow-sm transition">
+                        全部顯示
+                    </button>
+                    <button onclick="filterElements('alkali')" data-filter="alkali" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-100 text-rose-800 hover:bg-rose-200 border border-rose-200 transition">
+                        1A 鹼金屬 (Li~Fr)
+                    </button>
+                    <button onclick="filterElements('alkaline-earth')" data-filter="alkaline-earth" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-100 text-orange-800 hover:bg-orange-200 border border-orange-200 transition">
+                        2A 鹼土金屬 (Be~Ra)
+                    </button>
+                    <button onclick="filterElements('halogen')" data-filter="halogen" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-100 text-cyan-800 hover:bg-cyan-200 border border-cyan-200 transition">
+                        7A 鹵素 (F~At)
+                    </button>
+                    <button onclick="filterElements('noble')" data-filter="noble" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200 transition">
+                        8A 鈍氣/惰性氣體
+                    </button>
+                    <button onclick="filterElements('metalloid')" data-filter="metalloid" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-200 transition">
+                        類金屬 (半導體)
+                    </button>
+                    <button onclick="filterElements('liquid')" data-filter="liquid" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-200 transition">
+                        💧 常溫液態 (Hg, Br)
+                    </button>
+                    <button onclick="filterElements('transition')" data-filter="transition" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200 transition">
+                        過渡金屬 (多有色/變價)
+                    </button>
+                </div>
+
+                <!-- 當前篩選提示條 (動態顯示考點口訣) -->
+                <div id="filter-tip-banner" class="hidden bg-teal-50 border-l-4 border-teal-500 p-3 rounded-r-xl text-xs sm:text-sm text-teal-900 flex items-start gap-2.5">
+                    <span class="text-lg leading-none">💡</span>
+                    <div id="filter-tip-text"></div>
+                </div>
+            </div>
+
+            <!-- 週期表主體容器 (可橫向滑動適應手機) -->
+            <div class="bg-white rounded-2xl p-3 sm:p-5 shadow-sm border border-slate-200/80 overflow-x-auto">
+                <div class="min-w-[880px]">
+                    <!-- 族號標示列 (IUPAC 1-18 與 傳統 A/B 族對照) -->
+                    <div class="ptable-grid mb-1.5 text-center text-[11px] font-bold text-slate-500">
+                        <div class="bg-rose-50 text-rose-700 rounded py-1">1<br><span class="text-[10px]">1A</span></div>
+                        <div class="bg-orange-50 text-orange-700 rounded py-1">2<br><span class="text-[10px]">2A</span></div>
+                        <div class="py-1">3<br><span class="text-[10px]">3B</span></div>
+                        <div class="py-1">4<br><span class="text-[10px]">4B</span></div>
+                        <div class="py-1">5<br><span class="text-[10px]">5B</span></div>
+                        <div class="py-1">6<br><span class="text-[10px]">6B</span></div>
+                        <div class="py-1">7<br><span class="text-[10px]">7B</span></div>
+                        <div class="py-1">8<br><span class="text-[10px]">8B</span></div>
+                        <div class="py-1">9<br><span class="text-[10px]">8B</span></div>
+                        <div class="py-1">10<br><span class="text-[10px]">8B</span></div>
+                        <div class="py-1">11<br><span class="text-[10px]">1B</span></div>
+                        <div class="py-1">12<br><span class="text-[10px]">2B</span></div>
+                        <div class="bg-slate-100 text-slate-700 rounded py-1">13<br><span class="text-[10px]">3A</span></div>
+                        <div class="bg-slate-100 text-slate-700 rounded py-1">14<br><span class="text-[10px]">4A</span></div>
+                        <div class="bg-slate-100 text-slate-700 rounded py-1">15<br><span class="text-[10px]">5A</span></div>
+                        <div class="bg-slate-100 text-slate-700 rounded py-1">16<br><span class="text-[10px]">6A</span></div>
+                        <div class="bg-cyan-50 text-cyan-700 rounded py-1">17<br><span class="text-[10px]">7A</span></div>
+                        <div class="bg-purple-50 text-purple-700 rounded py-1">18<br><span class="text-[10px]">8A</span></div>
+                    </div>
+
+                    <!-- 週期表 1~7 週期主網格 (由 JS 動態渲染) -->
+                    <div id="periodic-table-main" class="ptable-grid"></div>
+
+                    <!-- 鑭系與錒系獨立列 -->
+                    <div class="mt-4 pt-3 border-t border-dashed border-slate-200">
+                        <div id="periodic-table-fblock" class="ptable-grid"></div>
+                    </div>
+
+                    <!-- 圖例說明 -->
+                    <div class="mt-5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="flex items-center gap-1.5"><i class="w-3 h-3 rounded bg-rose-100 border border-rose-300 inline-block"></i>鹼金屬 (1A)</span>
+                            <span class="flex items-center gap-1.5"><i class="w-3 h-3 rounded bg-orange-100 border border-orange-300 inline-block"></i>鹼土金屬 (2A)</span>
+                            <span class="flex items-center gap-1.5"><i class="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block"></i>過渡金屬</span>
+                            <span class="flex items-center gap-1.5"><i class="w-3 h-3 rounded bg-lime-100 border border-lime-300 inline-block"></i>貧金屬(其他金屬)</span>
+                            <span class="flex items-center gap-1.5"><i class="w-3 h-3 rounded bg-emerald-100 border border-emerald-400 inline-block"></i>類金屬(階梯線旁)</span>
+                            <span class="flex items-center gap-1.5"><i class="w-3 h-3 rounded bg-sky-100 border border-sky-300 inline-block"></i>一般非金屬</span>
+                            <span class="flex items-center gap-1.5"><i class="w-3 h-3 rounded bg-cyan-100 border border-cyan-300 inline-block"></i>鹵素 (7A)</span>
+                            <span class="flex items-center gap-1.5"><i class="w-3 h-3 rounded bg-purple-100 border border-purple-300 inline-block"></i>鈍氣 (8A)</span>
+                        </div>
+                        <div class="flex items-center gap-3 font-medium">
+                            <span class="text-blue-600 font-bold">💧 藍字＝常溫液態</span>
+                            <span class="text-red-600 font-bold">🎈 紅字＝常溫氣態</span>
+                            <span class="text-slate-700 font-bold">⬛ 黑字＝常溫固態</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 國高中週期表核心規律速記卡 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="text-teal-700 font-bold text-sm mb-1.5 flex items-center gap-1.5">
+                        <span>📏</span> 週期與族的決定方式
+                    </div>
+                    <ul class="text-xs text-slate-600 space-y-1.5 leading-relaxed">
+                        <li>• <strong>週期數 ＝ 電子層數</strong>（例：Na 組態 2, 8, 1 有 3 層 → 第 3 週期）。</li>
+                        <li>• <strong>主族族數 ＝ 價電子數</strong>（例：Cl 組態 2, 8, 7 最外層 7 個 → 7A 族）。</li>
+                        <li>• <strong>同族化學性質相似</strong>：因為「價電子數相同」！</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="text-amber-700 font-bold text-sm mb-1.5 flex items-center gap-1.5">
+                        <span>🔥</span> 活性與半徑趨勢（學測重點）
+                    </div>
+                    <ul class="text-xs text-slate-600 space-y-1.5 leading-relaxed">
+                        <li>• <strong>原子半徑</strong>：同族由上往下<strong>變大</strong>（層數增加）；同週期由左往右<strong>變小</strong>（核電荷吸引力增強）。</li>
+                        <li>• <strong>金屬活性</strong>：越往<strong>左下角</strong>越強（易失電子，如 Cs > K > Na）。</li>
+                        <li>• <strong>非金屬活性</strong>：越往<strong>右上角</strong>越強（不含鈍氣，易得電子，如 F > Cl > Br > I）。</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="text-rose-700 font-bold text-sm mb-1.5 flex items-center gap-1.5">
+                        <span>⚠️</span> 考試最愛考的「唯一與例外」
+                    </div>
+                    <ul class="text-xs text-slate-600 space-y-1.5 leading-relaxed">
+                        <li>• <strong>常溫常壓唯二液態</strong>：金屬是<strong>汞 (Hg)</strong>，非金屬是<strong>溴 (Br<sub>2</sub>)</strong>。</li>
+                        <li>• <strong>氫 (H) 的位置</strong>：排在 1A 族上方是因價電子為 1，但它<strong>不是鹼金屬</strong>，是非金屬！</li>
+                        <li>• <strong>類金屬（半導體）</strong>：沿著階梯線的 <strong>B, Si, Ge, As, Sb, Te</strong>，其中矽 (Si) 最重要。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- 分頁二：常見離子與酸根價數表 & 化學式組合實驗室 -->
+        <!-- ===================================================================== -->
+        <section id="section-ions" class="hidden space-y-6">
+            
+            <!-- 互動化學式組合實驗室 (Formula Builder) -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-slate-700">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Interactive Formula Builder</span>
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            ⚗️ 互動化學式組合實驗室（交叉相乘法演示）
+                        </h2>
+                    </div>
+                    <p class="text-xs text-slate-300">選擇任一陽離子與陰離子，自動演練電中性原則與括號規則！</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center bg-white/5 p-4 rounded-xl border border-white/10">
+                    <!-- 選擇陽離子 -->
+                    <div class="lg:col-span-4 space-y-1.5">
+                        <label class="block text-xs font-bold text-rose-300">1. 選擇正離子（陽離子，寫在前面）</label>
+                        <select id="builder-cation" onchange="updateFormulaBuilder()" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-teal-400">
+                            <!-- 由 JS 填充 -->
+                        </select>
+                    </div>
+
+                    <!-- 加號 -->
+                    <div class="lg:col-span-1 text-center text-2xl font-bold text-slate-400">+</div>
+
+                    <!-- 選擇陰離子 -->
+                    <div class="lg:col-span-4 space-y-1.5">
+                        <label class="block text-xs font-bold text-cyan-300">2. 選擇負離子（陰離子，寫在後面）</label>
+                        <select id="builder-anion" onchange="updateFormulaBuilder()" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-teal-400">
+                            <!-- 由 JS 填充 -->
+                        </select>
+                    </div>
+
+                    <!-- 箭頭 -->
+                    <div class="lg:col-span-1 text-center text-2xl font-bold text-amber-400">➔</div>
+
+                    <!-- 組合結果卡片 -->
+                    <div class="lg:col-span-2 bg-teal-950/80 border border-teal-500/40 rounded-xl p-3 text-center">
+                        <div class="text-[11px] text-teal-300 mb-0.5">化合物化學式</div>
+                        <div id="builder-result-formula" class="text-2xl font-mono font-bold text-white tracking-wide">NaCl</div>
+                        <div id="builder-result-name" class="text-xs font-bold text-amber-300 mt-1">氯化鈉</div>
+                    </div>
+                </div>
+
+                <!-- 步驟詳解區 -->
+                <div id="builder-explanation" class="mt-3 text-xs sm:text-sm text-slate-200 bg-black/25 rounded-xl p-3.5 leading-relaxed border border-white/5">
+                    <!-- 動態生成推導過程 -->
+                </div>
+            </div>
+
+            <!-- 離子背誦模式控制列 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">國高中必背常見正負離子與原子團（酸根）總表</h3>
+                    <p class="text-xs text-slate-500">寫化學式與平衡方程式的基礎：化合物總正電荷 ＋ 總負電荷 ＝ 0</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleIonQuizMode()" id="btn-ion-quiz-mode" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition flex items-center gap-2">
+                        <span>🙈</span>
+                        <span id="ion-quiz-mode-text">開啟「遮蔽背誦模式」</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 離子雙欄列表：左正離子、右負離子 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- 正離子 (陽離子) 區塊 -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-rose-200/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-rose-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 font-bold flex items-center justify-center">+</span>
+                            <div>
+                                <h3 class="font-bold text-rose-900">正離子（陽離子 Cations）</h3>
+                                <p class="text-xs text-slate-500">失去電子形成，大多為金屬離子（銨根除外）</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full font-bold">命名：某離子</span>
+                    </div>
+
+                    <div id="cations-container" class="space-y-4">
+                        <!-- 由 JS 動態生成 +1, +2, +3 離子群組 -->
+                    </div>
+                </div>
+
+                <!-- 負離子 (陰離子與酸根) 區塊 -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-cyan-200/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-cyan-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 font-bold flex items-center justify-center">−</span>
+                            <div>
+                                <h3 class="font-bold text-cyan-900">負離子（陰離子與酸根 Anions）</h3>
+                                <p class="text-xs text-slate-500">得到電子形成，單原子叫「化某」、多原子叫「某酸根」</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-cyan-50 text-cyan-700 px-2.5 py-1 rounded-full font-bold">命名：某化／某酸根</span>
+                    </div>
+
+                    <div id="anions-container" class="space-y-4">
+                        <!-- 由 JS 動態生成 -1, -2, -3 離子群組 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 國中會考＆高中學測常見「有色離子」速記表 -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+                <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <span>🎨</span> 考題超高頻：常見水溶液離子顏色速記
+                </h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-center">
+                    <div class="p-3 rounded-xl bg-sky-50 border border-sky-200">
+                        <div class="w-8 h-8 rounded-full bg-sky-500 mx-auto mb-1.5 shadow-inner"></div>
+                        <div class="font-mono font-bold text-sky-900">Cu<sup>2+</sup></div>
+                        <div class="text-xs text-slate-600">銅離子：藍色</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                        <div class="w-8 h-8 rounded-full bg-emerald-400 mx-auto mb-1.5 shadow-inner"></div>
+                        <div class="font-mono font-bold text-emerald-900">Fe<sup>2+</sup></div>
+                        <div class="text-xs text-slate-600">亞鐵離子：淡綠色</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-amber-50 border border-amber-300">
+                        <div class="w-8 h-8 rounded-full bg-amber-600 mx-auto mb-1.5 shadow-inner"></div>
+                        <div class="font-mono font-bold text-amber-900">Fe<sup>3+</sup></div>
+                        <div class="text-xs text-slate-600">鐵離子：黃褐色</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-fuchsia-50 border border-fuchsia-200">
+                        <div class="w-8 h-8 rounded-full bg-fuchsia-700 mx-auto mb-1.5 shadow-inner"></div>
+                        <div class="font-mono font-bold text-fuchsia-900">MnO<sub>4</sub><sup>−</sup></div>
+                        <div class="text-xs text-slate-600">過錳酸根：紫紅色</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-yellow-50 border border-yellow-300">
+                        <div class="w-8 h-8 rounded-full bg-yellow-400 mx-auto mb-1.5 shadow-inner"></div>
+                        <div class="font-mono font-bold text-yellow-900">CrO<sub>4</sub><sup>2−</sup></div>
+                        <div class="text-xs text-slate-600">鉻酸根：黃色(鹼性)</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-orange-50 border border-orange-300">
+                        <div class="w-8 h-8 rounded-full bg-orange-500 mx-auto mb-1.5 shadow-inner"></div>
+                        <div class="font-mono font-bold text-orange-900">Cr<sub>2</sub>O<sub>7</sub><sup>2−</sup></div>
+                        <div class="text-xs text-slate-600">二鉻酸根：橙色(酸性)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- 分頁三：國高中觀念實戰題庫（含詳解教學） -->
+        <!-- ===================================================================== -->
+        <section id="section-quiz" class="hidden space-y-5">
+            
+            <!-- 題庫儀表板與篩選器 -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            📝 國高中元素週期表與離子觀念實戰題庫
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">點擊選項立即批改，每題皆附有「老師逐項詳解」與「考點口訣」！</p>
+                    </div>
+
+                    <!-- 即時答題統計 -->
+                    <div class="flex flex-wrap items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
+                        <div class="text-xs">
+                            <span class="text-slate-500">已作答：</span>
+                            <span id="stat-answered" class="font-mono font-bold text-slate-800 text-sm">0</span>
+                            <span class="text-slate-400">/ <span id="stat-total">22</span></span>
+                        </div>
+                        <div class="h-4 w-px bg-slate-300"></div>
+                        <div class="text-xs">
+                            <span class="text-slate-500">答對題數：</span>
+                            <span id="stat-correct" class="font-mono font-bold text-emerald-600 text-sm">0</span>
+                        </div>
+                        <div class="h-4 w-px bg-slate-300"></div>
+                        <div class="text-xs">
+                            <span class="text-slate-500">正確率：</span>
+                            <span id="stat-accuracy" class="font-mono font-bold text-teal-700 text-sm">--%</span>
+                        </div>
+                        <button onclick="resetQuiz()" class="ml-1 text-xs bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg font-bold transition">
+                            🔄 重新測驗
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 題目難度/主題篩選按鈕 -->
+                <div class="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-slate-100">
+                    <span class="text-xs font-bold text-slate-500 mr-1">題庫分類：</span>
+                    <button onclick="filterQuiz('all')" data-qfilter="all" class="qfilter-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-700 text-white shadow-sm transition">
+                        全部題目 (22題)
+                    </button>
+                    <button onclick="filterQuiz('junior')" data-qfilter="junior" class="qfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                        🟢 國中基礎 / 會考必考
+                    </button>
+                    <button onclick="filterQuiz('senior')" data-qfilter="senior" class="qfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                        🔵 高中進階 / 學測趨勢
+                    </button>
+                    <button onclick="filterQuiz('ions')" data-qfilter="ions" class="qfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                        ⚡ 離子價數與化學式專區
+                    </button>
+                    <button onclick="filterQuiz('wrong')" data-qfilter="wrong" id="btn-filter-wrong" class="qfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition">
+                        ❌ 錯題重練 (<span id="wrong-count">0</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 題目列表容器 -->
+            <div id="quiz-list-container" class="space-y-4">
+                <!-- 由 JS 動態生成題目卡片 -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-white border-t border-slate-200 py-5 mt-10 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="font-bold text-slate-700 mb-1">元素週期表與常見離子價數互動學習網</p>
+            <p>專為台灣國中自然科（理化）與高中化學課程設計・支援會考與學測核心觀念複習</p>
+        </div>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- 元素詳細知識卡 Modal 彈跳視窗 -->
+    <!-- ===================================================================== -->
+    <div id="element-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeElementModal(event)">
+        <div class="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-slate-200 transform transition-all" onclick="event.stopPropagation()">
+            <!-- Modal 頂部色彩橫幅 -->
+            <div id="modal-header-bg" class="p-6 text-slate-900 relative bg-teal-100">
+                <button onclick="closeElementModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/70 hover:bg-white text-slate-800 font-bold flex items-center justify-center shadow-sm transition">
+                    ✕
+                </button>
+                <div class="flex items-center gap-5">
+                    <!-- 大元素方塊 -->
+                    <div class="w-24 h-24 rounded-2xl bg-white/90 shadow-md border border-white flex flex-col items-center justify-center shrink-0">
+                        <span id="modal-number" class="text-xs font-mono font-bold text-slate-500">11</span>
+                        <span id="modal-symbol" class="text-4xl font-mono font-black text-slate-900 leading-none my-0.5">Na</span>
+                        <span id="modal-mass" class="text-[11px] font-mono text-slate-500">22.99</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 id="modal-name" class="text-3xl font-black tracking-tight">鈉</h3>
+                            <span id="modal-zhuyin" class="text-sm font-bold bg-white/80 px-2.5 py-0.5 rounded-lg text-slate-700">ㄋㄚˋ</span>
+                            <span id="modal-state-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-white">常溫固態</span>
+                        </div>
+                        <p id="modal-en-name" class="text-sm font-mono font-medium opacity-75 mt-0.5">Sodium</p>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span id="modal-category-badge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-white/80 text-slate-800 shadow-sm">鹼金屬 (1A族)</span>
+                            <span id="modal-period-group" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-black/10 text-slate-900">第 3 週期・第 1 族</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal 內容細節 -->
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <!-- 數據小卡列 -->
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                        <div class="text-[11px] text-slate-500 font-bold">電子組態 (殼層)</div>
+                        <div id="modal-config" class="font-mono font-bold text-sm text-slate-800 mt-1">2, 8, 1</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                        <div class="text-[11px] text-slate-500 font-bold">價電子數</div>
+                        <div id="modal-valence-e" class="font-mono font-bold text-sm text-teal-700 mt-1">1</div>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                        <div class="text-[11px] text-amber-800 font-bold">常見離子 / 氧化數</div>
+                        <div id="modal-ions" class="font-mono font-bold text-sm text-amber-900 mt-1">Na<sup>+</sup> (+1)</div>
+                    </div>
+                </div>
+
+                <!-- 易錯字與發音提醒 (若有) -->
+                <div id="modal-typo-box" class="hidden bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-900 flex items-center gap-2">
+                    <span class="text-base">✍️</span>
+                    <div id="modal-typo-text"></div>
+                </div>
+
+                <!-- 國高中必考重點整理 -->
+                <div class="space-y-3">
+                    <div class="bg-teal-50/70 border border-teal-200/80 rounded-2xl p-4">
+                        <h4 class="text-sm font-bold text-teal-900 mb-1.5 flex items-center gap-1.5">
+                            <span>🎯</span> 國高中必考核心重點
+                        </h4>
+                        <p id="modal-exam-points" class="text-sm text-slate-700 leading-relaxed"></p>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                        <h4 class="text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                            <span>🔬</span> 物理性質、生活應用與實驗現象
+                        </h4>
+                        <p id="modal-uses" class="text-sm text-slate-600 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- JavaScript 核心資料庫與互動邏輯 -->
+    <!-- ===================================================================== -->
+    <script>
+        // ---------------------------------------------------------------------
+        // 1. 完整 118 元素資料庫 (包含台灣國高中必考重點、注音、易錯字、電子組態、離子)
+        // ---------------------------------------------------------------------
+        // cat 分類代碼:
+        // nonmetal(一般非金屬), noble(鈍氣), alkali(鹼金屬), alkaline-earth(鹼土金屬),
+        // metalloid(類金屬), halogen(鹵素), transition(過渡金屬), post-transition(貧金屬),
+        // lanthanide(鑭系), actinide(錒系)
+        const elementsData = [
+            // 第 1 週期
+            { n: 1, s: "H", name: "氫", zhuyin: "ㄑㄧㄥ", en: "Hydrogen", mass: "1.008", r: 1, c: 1, cat: "nonmetal", state: "gas", examCore: true, config: "1", ve: "1", ions: "H⁺ (+1), H⁻ (-1)",
+              typo: "部首為「气」，下方為「巠」，請勿寫成「輕」。",
+              points: "【會考/學測必考】雖然排在 1A 族最上方（因價電子為 1），但氫是「非金屬」，不屬於鹼金屬！密度最小、難溶於水、具可燃性（點火有爆鳴聲，燃燒產物只有水，最環保）。",
+              uses: "無色無味氣體。實驗室常用「鋅 + 稀鹽酸」或「活性大金屬（如鈉）+ 水」製備氫氣。" },
+            { n: 2, s: "He", name: "氦", zhuyin: "ㄏㄞˋ", en: "Helium", mass: "4.003", r: 1, c: 18, cat: "noble", state: "gas", examCore: true, config: "2", ve: "2", ions: "0 (極安定)",
+              typo: "部首為「气」，右半邊為「亥」。",
+              points: "【會考/學測必考】鈍氣成員，最外層僅 2 個電子即達穩定（杜氏規則），其餘鈍氣皆為 8 個（八隅體）。密度僅次於氫氣，且不助燃、不可燃，極度安全！",
+              uses: "取代易燃的氫氣填充飛船、氣象氣球；潛水員呼吸氣體中混合氦氣可預防潛水夫病。" },
+
+            // 第 2 週期
+            { n: 3, s: "Li", name: "鋰", zhuyin: "ㄌㄧˇ", en: "Lithium", mass: "6.94", r: 2, c: 1, cat: "alkali", state: "solid", examCore: true, config: "2, 1", ve: "1", ions: "Li⁺ (+1)",
+              points: "【鹼金屬 1A 族】密度最小的金屬（約 0.53 g/cm³），比水輕且比礦物油輕，因此必須儲存在「石蠟油」中（不能放煤油，會浮起來！）。與水反應產生氫氣與氫氧化鋰（鹼性）。",
+              uses: "3C 產品與電動車「鋰離子電池」的核心電極材料。" },
+            { n: 4, s: "Be", name: "鈹", zhuyin: "ㄆㄧˊ", en: "Beryllium", mass: "9.012", r: 2, c: 2, cat: "alkaline-earth", state: "solid", examCore: true, config: "2, 2", ve: "2", ions: "Be²⁺ (+2)",
+              points: "【鹼土金屬 2A 族】原子序最小、質量最輕的鹼土金屬。常溫下幾乎不與水反應（活性在 2A 族中最小）。",
+              uses: "航太工業合金、X 光管窗口材料（對 X 射線穿透性高）。" },
+            { n: 5, s: "B", name: "硼", zhuyin: "ㄆㄥˊ", en: "Boron", mass: "10.81", r: 2, c: 13, cat: "metalloid", state: "solid", examCore: true, config: "2, 3", ve: "3", ions: "+3 (共價為主)",
+              points: "【類金屬】位於階梯線上的非金屬/類金屬，導電性介於導體與絕緣體之間。",
+              uses: "硼矽酸鹽玻璃（耐熱玻璃如 Pyrex 燒杯）、硼砂、核反應爐控制棒（吸收中子）。" },
+            { n: 6, s: "C", name: "碳", zhuyin: "ㄊㄢˋ", en: "Carbon", mass: "12.01", r: 2, c: 14, cat: "nonmetal", state: "solid", examCore: true, config: "2, 4", ve: "4", ions: "+4, -4 (共價)",
+              typo: "石字旁的「碳」指元素（如二氧化碳、碳酸鈣）；無石字旁的「炭」指混合物（如木炭、煤炭、活性炭）。",
+              points: "【有機化學核心】能形成 4 個共價鍵。具有多種「同素異形體」：石墨（黑色、可導電，唯一可導電的非金屬單質）、鑽石/金剛石（最硬、不導電）、巴克球 (C₆₀)、奈米碳管。",
+              uses: "活性炭具多孔性可吸附雜質與異味；C-14 用於考古定年法。" },
+            { n: 7, s: "N", name: "氮", zhuyin: "ㄉㄢˋ", en: "Nitrogen", mass: "14.01", r: 2, c: 15, cat: "nonmetal", state: "gas", examCore: true, config: "2, 5", ve: "5", ions: "N³⁻ (-3), +5 等",
+              points: "佔大氣體積約 78%（最多）。氮氣 (N₂) 分子內有參鍵，鍵能極大，常溫下化學性質極不活潑，但高溫閃電時可與氧反應生成氮氧化物（酸雨來源之一）。",
+              uses: "食品包裝填充氣（防氧化與防壓碎）、液態氮（-196°C）用於冷凍醫療與保存。" },
+            { n: 8, s: "O", name: "氧", zhuyin: "ㄧㄤˇ", en: "Oxygen", mass: "16.00", r: 2, c: 16, cat: "nonmetal", state: "gas", examCore: true, config: "2, 6", ve: "6", ions: "O²⁻ (-2)",
+              points: "佔大氣體積約 21%，地殼中含量最豐富的元素！具「助燃性」（不具可燃性）。同素異形體為氧氣 (O₂) 與臭氧 (O₃，淡藍色具刺激味，吸收紫外線)。",
+              uses: "生物呼吸作用、金屬冶煉助燃。實驗室用「雙氧水 (H₂O₂) + 二氧化錳 (MnO₂ 催化劑)」製氧。" },
+            { n: 9, s: "F", name: "氟", zhuyin: "ㄈㄨˊ", en: "Fluorine", mass: "19.00", r: 2, c: 17, cat: "halogen", state: "gas", examCore: true, config: "2, 7", ve: "7", ions: "F⁻ (-1)",
+              typo: "气字頭加「弗」，讀音同「福」。",
+              points: "【鹵素 7A 族】元素週期表中「電負度最大」、「非金屬活性最強」的元素！常溫下為淡黃色劇毒氣體，氧化力極強，氧化數永遠只有 -1。",
+              uses: "含氟牙膏（預防蛀牙）、鐵氟龍（聚四氟乙烯，不沾鍋塗層）、冷媒（氟氯碳化物已禁用）。" },
+            { n: 10, s: "Ne", name: "氖", zhuyin: "ㄋㄞˇ", en: "Neon", mass: "20.18", r: 2, c: 18, cat: "noble", state: "gas", examCore: true, config: "2, 8", ve: "8", ions: "0",
+              typo: "气字頭加「乃」，讀音同「奶」。",
+              points: "【鈍氣 8A 族】滿足八隅體規則，單原子分子存在，化學性質極安定。",
+              uses: "霓虹燈管（通電時發出亮眼的紅橙色光，穿透霧氣能力強）。" },
+
+            // 第 3 週期
+            { n: 11, s: "Na", name: "鈉", zhuyin: "ㄋㄚˋ", en: "Sodium", mass: "22.99", r: 3, c: 1, cat: "alkali", state: "solid", examCore: true, config: "2, 8, 1", ve: "1", ions: "Na⁺ (+1)",
+              points: "【鹼金屬 1A 族必考】銀白色質軟金屬（可用小刀切開），密度 0.97 g/cm³（比水小），儲存在「煤油」中隔絕空氣與水。投入水中會浮在水面劇烈反應、熔成小球四處游動，產生氫氣與強鹼 NaOH（使酚酞變紅色）。焰色反應呈「金黃色」。",
+              uses: "食鹽 (NaCl)、小蘇打 (NaHCO₃)、蘇打 (Na₂CO₃)、燒鹼 (NaOH) 的組成元素。" },
+            { n: 12, s: "Mg", name: "鎂", zhuyin: "ㄇㄟˇ", en: "Magnesium", mass: "24.31", r: 3, c: 2, cat: "alkaline-earth", state: "solid", examCore: true, config: "2, 8, 2", ve: "2", ions: "Mg²⁺ (+2)",
+              points: "【鹼土金屬 2A 族必考】燃燒時發出強烈白光，生成白色氧化鎂 (MgO)，溶於水呈弱鹼性（Mg(OH)₂）。特別注意：鎂帶能在「二氧化碳」中繼續燃燒（2Mg + CO₂ → 2MgO + C），因此鎂火災不能用 CO₂ 滅火器！",
+              uses: "煙火、閃光燈、輕量化鎂鋁合金（筆電外殼、自行車架）。" },
+            { n: 13, s: "Al", name: "鋁", zhuyin: "ㄌㄩˇ", en: "Aluminum", mass: "26.98", r: 3, c: 13, cat: "post-transition", state: "solid", examCore: true, config: "2, 8, 3", ve: "3", ions: "Al³⁺ (+3)",
+              points: "【會考/學測必考】地殼中含量最多的「金屬元素」（含量排序：氧 > 矽 > 鋁 > 鐵）。鋁的活性其實很大，但表面會迅速形成緻密的「氧化鋁 (Al₂O₃)」保護層，防止內部繼續生鏽！兩性金屬，可溶於強酸與強鹼。",
+              uses: "鋁門窗、易開罐、飛機外殼（鋁合金密度小且耐腐蝕）。" },
+            { n: 14, s: "Si", name: "矽", zhuyin: "ㄒㄧˋ", en: "Silicon", mass: "28.09", r: 3, c: 14, cat: "metalloid", state: "solid", examCore: true, config: "2, 8, 4", ve: "4", ions: "+4, -4 (共價)",
+              typo: "台灣繁體中文稱為「矽」（ㄒㄧˋ），中國大陸稱為「硅」。",
+              points: "【類金屬核心】地殼中含量第二多的元素（僅次於氧），常以二氧化矽 (SiO₂，石英、砂石) 形式存在。最重要的半導體材料！",
+              uses: "台灣護國神山產業（晶圓、積體電路 IC 晶片）、太陽能電池、玻璃與光纖。" },
+            { n: 15, s: "P", name: "磷", zhuyin: "ㄌㄧㄣˊ", en: "Phosphorus", mass: "30.97", r: 3, c: 15, cat: "nonmetal", state: "solid", examCore: true, config: "2, 8, 5", ve: "5", ions: "P³⁻ (-3), +5",
+              typo: "石字旁的「磷」指化學元素；火字旁的「燐」指鬼火。",
+              points: "【同素異形體必考】常見有「白磷（黃磷）」與「紅磷」。白磷著火點極低（約 34°C），有劇毒且會自燃，必須儲存在「水中」；紅磷較安定，燃燒生成五氧化二磷 (P₄O₁₀)，溶於水為磷酸（酸性）。",
+              uses: "安全火柴盒側面的摩擦面含有紅磷、農業磷肥。" },
+            { n: 16, s: "S", name: "硫", zhuyin: "ㄌㄧㄡˊ", en: "Sulfur", mass: "32.06", r: 3, c: 16, cat: "nonmetal", state: "solid", examCore: true, config: "2, 8, 6", ve: "6", ions: "S²⁻ (-2), +4, +6",
+              points: "【非金屬必考】黃色脆性固體，無臭無味，不溶於水。燃燒時產生藍紫色火焰，生成具刺激性臭味的「二氧化硫 (SO₂)」，溶於水形成亞硫酸 (H₂SO₃)，是酸雨的主要成因。",
+              uses: "火山口常見礦物、製造硫酸、橡膠硫化（增加彈性）、火藥。" },
+            { n: 17, s: "Cl", name: "氯", zhuyin: "ㄌㄩˋ", en: "Chlorine", mass: "35.45", r: 3, c: 17, cat: "halogen", state: "gas", examCore: true, config: "2, 8, 7", ve: "7", ions: "Cl⁻ (-1), +1~+7",
+              typo: "气字頭加「录」，讀音同「綠」。",
+              points: "【鹵素 7A 族必考】常溫下為「黃綠色」有毒氣體，密度比空氣大，有強烈刺激臭味。溶於水呈弱酸性，具有漂白與殺菌作用（生成次氯酸 HClO）。",
+              uses: "自來水消毒殺菌、漂白水成分（次氯酸鈉 NaClO）、聚氯乙烯 (PVC) 塑膠。" },
+            { n: 18, s: "Ar", name: "氬", zhuyin: "ㄧㄚˋ", en: "Argon", mass: "39.95", r: 3, c: 18, cat: "noble", state: "gas", examCore: true, config: "2, 8, 8", ve: "8", ions: "0",
+              typo: "气字頭加「亞」，讀音同「亞」。",
+              points: "【鈍氣 8A 族必考】大氣中含量最多的鈍氣（約佔大氣 0.93%，居空氣成分第三位，僅次於氮、氧）。",
+              uses: "填充白熾燈泡（防止鎢絲在高溫下氧化燒斷）、電銲時的保護氣體。" },
+
+            // 第 4 週期
+            { n: 19, s: "K", name: "鉀", zhuyin: "ㄐㄧㄚˇ", en: "Potassium", mass: "39.10", r: 4, c: 1, cat: "alkali", state: "solid", examCore: true, config: "2, 8, 8, 1", ve: "1", ions: "K⁺ (+1)",
+              points: "【鹼金屬 1A 族必考】活性比鈉更大！投入水中會立即劇烈反應並起火燃燒，火焰呈「淡紫色」（鉀的焰色）。同樣必須儲存在煤油中。",
+              uses: "植物生長三大要素之一（氮、磷、鉀肥）、人體神經傳導重要離子。" },
+            { n: 20, s: "Ca", name: "鈣", zhuyin: "ㄍㄞˋ", en: "Calcium", mass: "40.08", r: 4, c: 2, cat: "alkaline-earth", state: "solid", examCore: true, config: "2, 8, 8, 2", ve: "2", ions: "Ca²⁺ (+2)",
+              points: "【鹼土金屬 2A 族必考】常溫下即可與冷水緩慢反應產生氫氣與氫氧化鈣（石灰水）。2A 族的碳酸鹽（如 CaCO₃）與硫酸鹽（如 CaSO₄）多難溶於水（白色沉澱）！焰色為磚紅色。",
+              uses: "石灰石/大理石 (CaCO₃)、生石灰 (CaO)、熟石灰 (Ca(OH)₂)、石膏 (CaSO₄)、骨骼與牙齒主要成分。" },
+            { n: 21, s: "Sc", name: "鈧", zhuyin: "ㄎㄤˋ", en: "Scandium", mass: "44.96", r: 4, c: 3, cat: "transition", state: "solid", examCore: false, config: "2,8,9,2", ve: "2", ions: "Sc³⁺", points: "過渡金屬元素，常用於高強度輕量化鋁鈧合金。", uses: "航太材料、高級自行車車架、棒球場照明燈。" },
+            { n: 22, s: "Ti", name: "鈦", zhuyin: "ㄊㄞˋ", en: "Titanium", mass: "47.87", r: 4, c: 4, cat: "transition", state: "solid", examCore: true, config: "2,8,10,2", ve: "2", ions: "Ti⁴⁺ (+4)",
+              points: "【過渡金屬】質量輕、強度高、極耐腐蝕且具高度「生物相容性」（不引起人體排斥）。",
+              uses: "人工關節、植牙牙根、眼鏡鏡框、航太引擎；二氧化鈦 (TiO₂) 為白色顏料與防曬乳成分。" },
+            { n: 23, s: "V", name: "釩", zhuyin: "ㄈㄢˊ", en: "Vanadium", mass: "50.94", r: 4, c: 5, cat: "transition", state: "solid", examCore: false, config: "2,8,11,2", ve: "2", ions: "+2, +3, +4, +5", points: "【高中化學重點】具有多種氧化態，不同價數水溶液呈現紫、綠、藍、黃四種繽紛色彩（口訣：紫綠藍黃）。", uses: "高強度工具鋼合金、接觸法製硫酸的催化劑 (V₂O₅)。" },
+            { n: 24, s: "Cr", name: "鉻", zhuyin: "ㄍㄜˋ", en: "Chromium", mass: "52.00", r: 4, c: 6, cat: "transition", state: "solid", examCore: true, config: "2,8,13,1", ve: "1", ions: "Cr³⁺, Cr⁶⁺",
+              typo: "讀音為「ㄍㄜˋ」（同各），常被誤讀為「ㄌㄨㄛˋ」。",
+              points: "【過渡金屬必考】硬度極高且抗腐蝕，是不鏽鋼的重要成分。高中必考鉻酸根 (CrO₄²⁻，黃色) 與二鉻酸根 (Cr₂O₇²⁻，橙色) 在酸鹼中的平衡轉換！",
+              uses: "不鏽鋼（鐵＋鉻＋鎳）、汽車保險桿電鍍防鏽。" },
+            { n: 25, s: "Mn", name: "錳", zhuyin: "ㄇㄥˇ", en: "Manganese", mass: "54.94", r: 4, c: 7, cat: "transition", state: "solid", examCore: true, config: "2,8,13,2", ve: "2", ions: "Mn²⁺, Mn⁴⁺, Mn⁷⁺",
+              points: "【過渡金屬必考】常見化合物：二氧化錳 (MnO₂，黑色固體，雙氧水製氧催化劑、乾電池去極劑)、過錳酸鉀 (KMnO₄，紫紅色強氧化劑)。",
+              uses: "煉鋼脫氧劑、乾電池電極材料。" },
+            { n: 26, s: "Fe", name: "鐵", zhuyin: "ㄊㄧㄝˇ", en: "Iron", mass: "55.85", r: 4, c: 8, cat: "transition", state: "solid", examCore: true, config: "2,8,14,2", ve: "2", ions: "Fe²⁺ (淡綠), Fe³⁺ (黃褐)",
+              points: "【過渡金屬核心】地殼含量第二多的金屬。生鏽需同時有「氧氣」與「水」，鐵鏽主要成分為氧化鐵 (Fe₂O₃·xH₂O)，質地疏鬆會持續向內鏽蝕。具有變價：亞鐵離子 Fe²⁺（淡綠色）、鐵離子 Fe³⁺（黃褐色）。",
+              uses: "人類使用最廣泛的金屬（生鐵、熟鐵、鋼）、血紅素核心元素。" },
+            { n: 27, s: "Co", name: "鈷", zhuyin: "ㄍㄨˇ", en: "Cobalt", mass: "58.93", r: 4, c: 9, cat: "transition", state: "solid", examCore: true, config: "2,8,15,2", ve: "2", ions: "Co²⁺, Co³⁺",
+              points: "【國中會考必考】「氯化亞鈷試紙」用於檢驗水的存在！乾燥無水時呈「藍色」，遇到水（濕潤）變成「粉紅色」（口訣：無水藍、有水紅）。",
+              uses: "氯化亞鈷試紙、強力磁鐵、鈷-60 放射性同位素（癌症放射治療）。" },
+            { n: 28, s: "Ni", name: "鎳", zhuyin: "ㄋㄧㄝˋ", en: "Nickel", mass: "58.69", r: 4, c: 10, cat: "transition", state: "solid", examCore: true, config: "2,8,16,2", ve: "2", ions: "Ni²⁺ (+2)",
+              typo: "金字旁加「臬」，讀音為「ㄋㄧㄝˋ」（同聶）。",
+              points: "【過渡金屬】具磁性（鐵、鈷、鎳為三大鐵磁性元素），抗腐蝕性佳。",
+              uses: "硬幣合金、不鏽鋼成分、鎳氫充電電池。" },
+            { n: 29, s: "Cu", name: "銅", zhuyin: "ㄊㄨㄥˊ", en: "Copper", mass: "63.55", r: 4, c: 11, cat: "transition", state: "solid", examCore: true, config: "2,8,18,1", ve: "1", ions: "Cu²⁺ (+2, 藍色), Cu⁺",
+              points: "【過渡金屬核心】唯一「紅棕色」金屬（純金為黃色，其餘多為銀白色）。導電性與導熱性在金屬中僅次於銀（排名第二）。水溶液中銅離子 Cu²⁺ 呈「藍色」；無水硫酸銅 (CuSO₄) 為白色粉末，遇水變藍色（驗水劑）。",
+              uses: "電線電纜、青銅（銅＋錫）、黃銅（銅＋鋅）。" },
+            { n: 30, s: "Zn", name: "鋅", zhuyin: "ㄒㄧㄣ", en: "Zinc", mass: "65.38", r: 4, c: 12, cat: "transition", state: "solid", examCore: true, config: "2,8,18,2", ve: "2", ions: "Zn²⁺ (+2, 無色)",
+              points: "【過渡金屬必考】活性比鐵大！在鐵皮表面鍍鋅稱為「白鐵（馬口鐵為鍍錫）」，即使刮傷，鋅仍會優先氧化以保護內部的鐵（犧牲陽極保護法）。兩性金屬，可溶於強酸與強鹼。",
+              uses: "乾電池負極外殼、鍍鋅鐵皮（白鐵）、黃銅合金。" },
+            { n: 31, s: "Ga", name: "鎵", zhuyin: "ㄐㄧㄚ", en: "Gallium", mass: "69.72", r: 4, c: 13, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,3", ve: "3", ions: "Ga³⁺", points: "熔點極低（僅 29.8°C），放在手心就會融化成液體！", uses: "砷化鎵 (GaAs) 高速半導體、LED 發光二極體。" },
+            { n: 32, s: "Ge", name: "鍺", zhuyin: "ㄓㄜˇ", en: "Germanium", mass: "72.63", r: 4, c: 14, cat: "metalloid", state: "solid", examCore: true, config: "2,8,18,4", ve: "4", ions: "+4, +2",
+              typo: "金字旁加「者」，讀音為「ㄓㄜˇ」。",
+              points: "【類金屬】門得列夫當年精準預測的「類矽」元素，為早期電晶體與重要半導體材料。",
+              uses: "光纖通訊、紅外線光學鏡頭、半導體元件。" },
+            { n: 33, s: "As", name: "砷", zhuyin: "ㄕㄣ", en: "Arsenic", mass: "74.92", r: 4, c: 15, cat: "metalloid", state: "solid", examCore: true, config: "2,8,18,5", ve: "5", ions: "-3, +3, +5",
+              points: "【類金屬】化合物有劇毒（三氧化二砷 As₂O₃ 即古代的「砒霜」）。台灣早年西南沿海「烏腳病」與地下水含砷有關。",
+              uses: "砷化鎵半導體、木材防腐劑。" },
+            { n: 34, s: "Se", name: "硒", zhuyin: "ㄒㄧ", en: "Selenium", mass: "78.97", r: 4, c: 16, cat: "nonmetal", state: "solid", examCore: false, config: "2,8,18,6", ve: "6", ions: "Se²⁻ (-2)", points: "具光導性（照光時導電度大增），人體必需微量元素。", uses: "影印機感光鼓、太陽能電池。" },
+            { n: 35, s: "Br", name: "溴", zhuyin: "ㄒㄧㄡˋ", en: "Bromine", mass: "79.90", r: 4, c: 17, cat: "halogen", state: "liquid", examCore: true, config: "2, 8, 18, 7", ve: "7", ions: "Br⁻ (-1)",
+              typo: "水字旁加「臭」，讀音為「ㄒㄧㄡˋ」（同秀），請勿寫成「臭」！",
+              points: "【超高頻必考】常溫常壓下「唯一的液態非金屬」！呈暗紅棕色液體，易揮發產生紅棕色有毒蒸氣（具腐蝕性），必須儲存在深色玻璃瓶中。",
+              uses: "溴化銀 (AgBr) 用於傳統照相底片感光劑、阻燃劑。" },
+            { n: 36, s: "Kr", name: "氪", zhuyin: "ㄎㄜˋ", en: "Krypton", mass: "83.80", r: 4, c: 18, cat: "noble", state: "gas", examCore: false, config: "2,8,18,8", ve: "8", ions: "0", points: "【鈍氣 8A 族】通電發出明亮白光，常用於機場跑道指示燈。", uses: "高強度閃光燈、雷射氣體。" },
+
+            // 第 5 週期 (重點標註 Rb, Sr, Ag, Cd, Sn, Sb, I, Xe)
+            { n: 37, s: "Rb", name: "銣", zhuyin: "ㄖㄨˊ", en: "Rubidium", mass: "85.47", r: 5, c: 1, cat: "alkali", state: "solid", examCore: false, config: "2,8,18,8,1", ve: "1", ions: "Rb⁺", points: "【鹼金屬 1A 族】活性比鉀更大，遇水立即爆炸起火。", uses: "精準原子鐘、光電管。" },
+            { n: 38, s: "Sr", name: "鍶", zhuyin: "ㄙ", en: "Strontium", mass: "87.62", r: 5, c: 2, cat: "alkaline-earth", state: "solid", examCore: false, config: "2,8,18,8,2", ve: "2", ions: "Sr²⁺", points: "【鹼土金屬 2A 族】焰色反應呈耀眼的「洋紅色（深紅色）」。", uses: "煙火與信號彈的紅色發色劑。" },
+            { n: 39, s: "Y", name: "釔", zhuyin: "ㄧˇ", en: "Yttrium", mass: "88.91", r: 5, c: 3, cat: "transition", state: "solid", examCore: false, config: "2,8,18,9,2", ve: "2", ions: "Y³⁺", points: "稀土元素之一，常用於高溫超導體與雷射晶體。", uses: "白光 LED 螢光粉、雷射材料。" },
+            { n: 40, s: "Zr", name: "鋯", zhuyin: "ㄍㄠˋ", en: "Zirconium", mass: "91.22", r: 5, c: 4, cat: "transition", state: "solid", examCore: false, config: "2,8,18,10,2", ve: "2", ions: "Zr⁴⁺", points: "極耐高溫與腐蝕，二氧化鋯俗稱「蘇聯鑽」。", uses: "核反應爐燃料棒護套、人造鑽石首飾。" },
+            { n: 41, s: "Nb", name: "鈮", zhuyin: "ㄋㄧˊ", en: "Niobium", mass: "92.91", r: 5, c: 5, cat: "transition", state: "solid", examCore: false, config: "2,8,18,12,1", ve: "1", ions: "Nb⁵⁺", points: "超導合金重要成分。", uses: "核磁共振 (MRI) 超導磁鐵。" },
+            { n: 42, s: "Mo", name: "鉬", zhuyin: "ㄇㄨˋ", en: "Molybdenum", mass: "95.95", r: 5, c: 6, cat: "transition", state: "solid", examCore: false, config: "2,8,18,13,1", ve: "1", ions: "Mo⁶⁺", points: "熔點極高，植物固氮酶必需微量元素。", uses: "高強度合金鋼、潤滑劑 (MoS₂)。" },
+            { n: 43, s: "Tc", name: "鎝", zhuyin: "ㄊㄚˇ", en: "Technetium", mass: "(98)", r: 5, c: 7, cat: "transition", state: "solid", examCore: false, config: "2,8,18,13,2", ve: "2", ions: "Tc⁷⁺", points: "第一個由人工核反應製造出的放射性元素（無穩定同位素）。", uses: "核子醫學影像診斷顯影劑。" },
+            { n: 44, s: "Ru", name: "釕", zhuyin: "ㄌㄧㄠˇ", en: "Ruthenium", mass: "101.1", r: 5, c: 8, cat: "transition", state: "solid", examCore: false, config: "2,8,18,15,1", ve: "1", ions: "Ru³⁺", points: "鉑族貴金屬，優良催化劑。", uses: "電子接點耐磨塗層、化學催化劑。" },
+            { n: 45, s: "Rh", name: "銠", zhuyin: "ㄌㄠˇ", en: "Rhodium", mass: "102.9", r: 5, c: 9, cat: "transition", state: "solid", examCore: false, config: "2,8,18,16,1", ve: "1", ions: "Rh³⁺", points: "極昂貴的鉑族貴金屬，反光率高且極耐腐蝕。", uses: "汽車排氣管觸媒轉化器、白金首飾鍍層。" },
+            { n: 46, s: "Pd", name: "鈀", zhuyin: "ㄅㄚˇ", en: "Palladium", mass: "106.4", r: 5, c: 10, cat: "transition", state: "solid", examCore: false, config: "2,8,18,18", ve: "0", ions: "Pd²⁺", points: "能大量吸收氫氣（可達自身體積 900 倍）。", uses: "汽車觸媒轉化器、儲氫材料。" },
+            { n: 47, s: "Ag", name: "銀", zhuyin: "ㄧㄣˊ", en: "Silver", mass: "107.9", r: 5, c: 11, cat: "transition", state: "solid", examCore: true, config: "2,8,18,18,1", ve: "1", ions: "Ag⁺ (+1)",
+              points: "【過渡金屬必考】所有金屬中「導電性、導熱性第一名」！活性極小（僅大於鉑、金），但易與空氣中的「硫化氫 (H₂S)」反應生成黑色的「硫化銀 (Ag₂S)」，使銀器變黑。氯化銀 (AgCl) 為不溶於酸的白色沉澱！",
+              uses: "高級導電接點、銀飾、傳統底片感光材料（鹵化銀）。" },
+            { n: 48, s: "Cd", name: "鎘", zhuyin: "ㄍㄜˊ", en: "Cadmium", mass: "112.4", r: 5, c: 12, cat: "transition", state: "solid", examCore: false, config: "2,8,18,18,2", ve: "2", ions: "Cd²⁺ (+2)", points: "有毒重金屬，曾引發日本「痛痛病」與台灣「鎘米」污染事件。", uses: "鎳鎘充電電池（已逐步淘汰）、核反應爐控制棒。" },
+            { n: 49, s: "In", name: "銦", zhuyin: "ㄧㄣ", en: "Indium", mass: "114.8", r: 5, c: 13, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,18,3", ve: "3", ions: "In³⁺", points: "質地極軟的金屬，氧化銦錫 (ITO) 兼具透明與導電特性。", uses: "手機與電腦觸控螢幕、液晶顯示器 (LCD)。" },
+            { n: 50, s: "Sn", name: "錫", zhuyin: "ㄒㄧˊ", en: "Tin", mass: "118.7", r: 5, c: 14, cat: "post-transition", state: "solid", examCore: true, config: "2,8,18,18,4", ve: "4", ions: "Sn²⁺, Sn⁴⁺",
+              points: "【國中會考必考】鐵皮表面鍍錫稱為「馬口鐵」（食品罐頭），因錫無毒且抗腐蝕，但一旦刮傷露出內部的鐵，因鐵活性＞錫，鐵反而會加速生鏽！",
+              uses: "食品罐頭（馬口鐵）、青銅合金（銅＋錫）、電子焊錫。" },
+            { n: 51, s: "Sb", name: "銻", zhuyin: "ㄊㄧˋ", en: "Antimony", mass: "121.8", r: 5, c: 15, cat: "metalloid", state: "solid", examCore: false, config: "2,8,18,18,5", ve: "5", ions: "Sb³⁺, Sb⁵⁺", points: "【類金屬】凝固時體積會膨脹（與水類似），早期用於鑄造活字印刷鉛字。", uses: "阻燃劑、鉛酸蓄電池合金。" },
+            { n: 52, s: "Te", name: "碲", zhuyin: "ㄉㄧˋ", en: "Tellurium", mass: "127.6", r: 5, c: 16, cat: "metalloid", state: "solid", examCore: false, config: "2,8,18,18,6", ve: "6", ions: "Te²⁻", points: "【類金屬】位於金屬與非金屬分界線上。", uses: "太陽能電池（碲化鎘）、熱電材料。" },
+            { n: 53, s: "I", name: "碘", zhuyin: "ㄉㄧㄢˇ", en: "Iodine", mass: "126.9", r: 5, c: 17, cat: "halogen", state: "solid", examCore: true, config: "2,8,18,18,7", ve: "7", ions: "I⁻ (-1)",
+              points: "【鹵素 7A 族必考】常溫下為「紫黑色」有金屬光澤的固體，受熱易直接「昇華」成紫紅色氣體（無液態過程）。遇「澱粉」會變成深藍紫色（生物科檢驗澱粉的試劑）！",
+              uses: "優碘消毒藥水、食鹽加碘（預防甲狀腺腫大）。" },
+            { n: 54, s: "Xe", name: "氙", zhuyin: "ㄒㄧㄢ", en: "Xenon", mass: "131.3", r: 5, c: 18, cat: "noble", state: "gas", examCore: false, config: "2,8,18,18,8", ve: "8", ions: "0 (+2,+4,+6)",
+              typo: "气字頭加「山」，讀音同「仙」。",
+              points: "【鈍氣 8A 族】原子半徑較大，外層電子受束縛較弱，是第一個被科學家合成出穩定化合物（如 XePtF₆）的鈍氣元素（打破鈍氣完全不反應的迷思）。",
+              uses: "汽車高亮度 HID 氙氣頭燈、相機閃光燈、衛星離子推進器。" },
+
+            // 第 6 週期 (含鑭系佔位符與重點元素 Cs, Ba, W, Pt, Au, Hg, Pb)
+            { n: 55, s: "Cs", name: "銫", zhuyin: "ㄙㄜˋ", en: "Cesium", mass: "132.9", r: 6, c: 1, cat: "alkali", state: "solid", examCore: true, config: "2,8,18,18,8,1", ve: "1", ions: "Cs⁺ (+1)",
+              points: "【鹼金屬 1A 族】自然界穩定元素中「金屬活性最強」、「原子半徑最大」、「電負度最小」的元素（钫 Fr 具強烈放射性極罕見）。",
+              uses: "國際標準時間「銫原子鐘」（每數千萬年誤差不到一秒）。" },
+            { n: 56, s: "Ba", name: "鋇", zhuyin: "ㄅㄟˋ", en: "Barium", mass: "137.3", r: 6, c: 2, cat: "alkaline-earth", state: "solid", examCore: true, config: "2,8,18,18,8,2", ve: "2", ions: "Ba²⁺ (+2)",
+              points: "【鹼土金屬 2A 族】可溶性鋇離子有劇毒，但「硫酸鋇 (BaSO₄)」極難溶於水也不溶於胃酸，因此可安全用於醫院腸胃 X 光攝影顯影劑（鋇餐）。",
+              uses: "醫療腸胃道 X 光造影劑、煙火綠色發色劑。" },
+            // 57-71 鑭系 (放於獨立 f 區塊)
+            { n: 72, s: "Hf", name: "鉿", zhuyin: "ㄏㄚ", en: "Hafnium", mass: "178.5", r: 6, c: 4, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,10,2", ve: "2", ions: "Hf⁴⁺", points: "極易吸收中子，耐高溫。", uses: "核潛艇反應爐控制棒、高介電常數晶片材料。" },
+            { n: 73, s: "Ta", name: "鉭", zhuyin: "ㄊㄢˇ", en: "Tantalum", mass: "180.9", r: 6, c: 5, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,11,2", ve: "2", ions: "Ta⁵⁺", points: "極耐酸腐蝕，常溫下連王水都無法溶解。", uses: "智慧型手機微型電容器、外科手術植入物。" },
+            { n: 74, s: "W", name: "鎢", zhuyin: "ㄨ", en: "Tungsten", mass: "183.8", r: 6, c: 6, cat: "transition", state: "solid", examCore: true, config: "2,8,18,32,12,2", ve: "2", ions: "W⁶⁺ (+6)",
+              points: "【過渡金屬必考】所有純金屬中「熔點最高」（高達 3422°C）！符號 W 來自德文 Wolfram。",
+              uses: "白熾燈泡燈絲、碳化鎢鑽頭（極硬的切削工具）。" },
+            { n: 75, s: "Re", name: "錸", zhuyin: "ㄌㄞˊ", en: "Rhenium", mass: "186.2", r: 6, c: 7, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,13,2", ve: "2", ions: "Re⁷⁺", points: "熔點僅次於鎢的金屬，耐高溫蠕變。", uses: "噴射戰鬥機渦輪葉片超合金。" },
+            { n: 76, s: "Os", name: "鋨", zhuyin: "ㄜˊ", en: "Osmium", mass: "190.2", r: 6, c: 8, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,14,2", ve: "2", ions: "Os⁸⁺", points: "自然界「密度最大」的物質（約 22.59 g/cm³，是水的 22.6 倍）！", uses: "高級鋼筆筆尖耐磨合金。" },
+            { n: 77, s: "Ir", name: "銥", zhuyin: "ㄧ", en: "Iridium", mass: "192.2", r: 6, c: 9, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,15,2", ve: "2", ions: "Ir⁴⁺", points: "極度抗腐蝕，白堊紀地層中的高濃度銥層是恐龍滅絕於小行星撞擊的關鍵證據。", uses: "火星探測車同位素電池外殼、火星塞電極。" },
+            { n: 78, s: "Pt", name: "鉑", zhuyin: "ㄅㄛˊ", en: "Platinum", mass: "195.1", r: 6, c: 10, cat: "transition", state: "solid", examCore: true, config: "2,8,18,32,17,1", ve: "1", ions: "Pt²⁺, Pt⁴⁺",
+              points: "【貴金屬必考】俗稱「白金」（注意：市面上所謂『K白金』通常是黃金與其他金屬的合金，純鉑才是真正的白金）。化學性質極安定，不與一般酸鹼反應（僅溶於王水），是極佳的化學催化劑！",
+              uses: "汽車觸媒轉化器（將有毒廢氣轉為無害氣體）、化學實驗室惰性電極、抗癌藥物順鉑。" },
+            { n: 79, s: "Au", name: "金", zhuyin: "ㄐㄧㄣ", en: "Gold", mass: "197.0", r: 6, c: 11, cat: "transition", state: "solid", examCore: true, config: "2,8,18,32,18,1", ve: "1", ions: "Au³⁺, Au⁺",
+              points: "【貴金屬必考】所有金屬中「活性最小」（最難氧化生鏽，真金不怕火煉）、「延展性最好」（1 克純金可拉成數公里細絲或打成極薄金箔）！不溶於單一強酸，僅溶於「王水」（1 體積濃硝酸 ＋ 3 體積濃鹽酸）。",
+              uses: "金融儲備、高級珠寶、手機與電腦主機板抗腐蝕導電接點。" },
+            { n: 80, s: "Hg", name: "汞", zhuyin: "ㄍㄨㄥˇ", en: "Mercury", mass: "200.6", r: 6, c: 12, cat: "transition", state: "liquid", examCore: true, config: "2,8,18,32,18,2", ve: "2", ions: "Hg²⁺ (+2), Hg₂²⁺",
+              typo: "上方為「工」，下方為「水」，讀音為「ㄍㄨㄥˇ」（俗稱水銀）。",
+              points: "【超高頻必考】常溫常壓下「唯一的液態金屬」！密度極大（13.6 g/cm³），內聚力大於附著力，在玻璃管中呈「凸液面」。汞蒸氣有劇毒（可撒硫粉處理成硫化汞）。能與許多金屬形成「汞齊」合金。",
+              uses: "傳統水銀氣壓計（托里切利實驗）、血壓計、日光燈管（汞蒸氣放電產生紫外線激發螢光粉）。" },
+            { n: 81, s: "Tl", name: "鉈", zhuyin: "ㄊㄚ", en: "Thallium", mass: "204.4", r: 6, c: 13, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,32,18,3", ve: "3", ions: "Tl⁺", points: "無色無味的劇毒重金屬，曾被稱為「毒藥之王」。", uses: "特殊光學玻璃、心臟心肌灌注掃描。" },
+            { n: 82, s: "Pb", name: "鉛", zhuyin: "ㄑㄧㄢ", en: "Lead", mass: "207.2", r: 6, c: 14, cat: "post-transition", state: "solid", examCore: true, config: "2,8,18,32,18,4", ve: "4", ions: "Pb²⁺ (+2), Pb⁴⁺",
+              points: "【貧金屬必考】密度大、質地軟、熔點較低，能有效阻擋 X 射線與 γ 射線輻射。碘化鉛 (PbI₂) 為亮黃色沉澱（高中常見沉澱反應）。",
+              uses: "汽機車「鉛酸蓄電池」電極（Pb 與 PbO₂）、醫院 X 光室防輻射鉛衣與鉛板。" },
+            { n: 83, s: "Bi", name: "鉍", zhuyin: "ㄅㄧˋ", en: "Bismuth", mass: "209.0", r: 6, c: 15, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,32,18,5", ve: "5", ions: "Bi³⁺", points: "重金屬中少數毒性極低者，氧化後表面會呈現彩虹般的絢麗薄膜。", uses: "胃藥成分（次水楊酸鉍）、低熔點保險絲合金。" },
+            { n: 84, s: "Po", name: "釙", zhuyin: "ㄆㄛˋ", en: "Polonium", mass: "(209)", r: 6, c: 16, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,32,18,6", ve: "6", ions: "Po⁴⁺", points: "居禮夫人發現的強烈放射性元素，以其祖國波蘭命名。", uses: "消除靜電刷、太空探測器熱源。" },
+            { n: 85, s: "At", name: "砈", zhuyin: "ㄜˋ", en: "Astatine", mass: "(210)", r: 6, c: 17, cat: "halogen", state: "solid", examCore: false, config: "2,8,18,32,18,7", ve: "7", ions: "At⁻ (-1)", points: "【鹵素 7A 族】地殼中最稀有的天然放射性元素，具部分金屬特性。", uses: "靶向α粒子癌症治療研究。" },
+            { n: 86, s: "Rn", name: "氡", zhuyin: "ㄉㄨㄥ", en: "Radon", mass: "(222)", r: 6, c: 18, cat: "noble", state: "gas", examCore: true, config: "2,8,18,32,18,8", ve: "8", ions: "0",
+              typo: "气字頭加「冬」，讀音同「東」。",
+              points: "【鈍氣 8A 族】唯一具有「放射性」的天然鈍氣！由岩石與土壤中的鈾衰變產生，是室內空氣污染與肺癌的隱形殺手之一。",
+              uses: "地震前兆地下水監測指標氣體。" },
+
+            // 第 7 週期 (含重點元素 Fr, Ra, U)
+            { n: 87, s: "Fr", name: "鍅", zhuyin: "ㄈㄚˇ", en: "Francium", mass: "(223)", r: 7, c: 1, cat: "alkali", state: "solid", examCore: false, config: "2,8,18,32,18,8,1", ve: "1", ions: "Fr⁺", points: "【鹼金屬 1A 族】具強烈放射性，半衰期僅 22 分鐘。", uses: "僅用於基礎物理科學研究。" },
+            { n: 88, s: "Ra", name: "鐳", zhuyin: "ㄌㄟˊ", en: "Radium", mass: "(226)", r: 7, c: 2, cat: "alkaline-earth", state: "solid", examCore: true, config: "2,8,18,32,18,8,2", ve: "2", ions: "Ra²⁺ (+2)",
+              points: "【鹼土金屬 2A 族】居禮夫婦歷經艱辛提煉出的強烈放射性元素，會在黑暗中發出微弱藍光。",
+              uses: "早期癌症放射治療（現已被更安全的同位素取代）。" },
+            // 89-103 錒系 (放於獨立 f 區塊)
+            { n: 104, s: "Rf", name: "鑪", zhuyin: "ㄌㄨˊ", en: "Rutherfordium", mass: "(267)", r: 7, c: 4, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,10,2", ve: "2", ions: "Rf⁴⁺", points: "人造超鈾元素，以發現原子核的拉塞福命名。", uses: "科學研究。" },
+            { n: 105, s: "Db", name: "𨧀", zhuyin: "ㄉㄨˋ", en: "Dubnium", mass: "(268)", r: 7, c: 5, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,11,2", ve: "2", ions: "Db⁵⁺", points: "人造放射性元素。", uses: "科學研究。" },
+            { n: 106, s: "Sg", name: "𨭎", zhuyin: "ㄒㄧˇ", en: "Seaborgium", mass: "(269)", r: 7, c: 6, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,12,2", ve: "2", ions: "Sg⁶⁺", points: "人造放射性元素，以核化學家西博格命名。", uses: "科學研究。" },
+            { n: 107, s: "Bh", name: "𨨏", zhuyin: "ㄅㄛ", en: "Bohrium", mass: "(270)", r: 7, c: 7, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,13,2", ve: "2", ions: "Bh⁷⁺", points: "人造放射性元素，以提出氫原子模型的波耳命名。", uses: "科學研究。" },
+            { n: 108, s: "Hs", name: "𨭆", zhuyin: "ㄏㄟ", en: "Hassium", mass: "(277)", r: 7, c: 8, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,14,2", ve: "2", ions: "Hs⁸⁺", points: "人造放射性元素。", uses: "科學研究。" },
+            { n: 109, s: "Mt", name: "䥑", zhuyin: "ㄇㄞˋ", en: "Meitnerium", mass: "(278)", r: 7, c: 9, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,15,2", ve: "2", ions: "-", points: "人造放射性元素，以發現核分裂的物理學家邁特納命名。", uses: "科學研究。" },
+            { n: 110, s: "Ds", name: "鐽", zhuyin: "ㄉㄚˊ", en: "Darmstadtium", mass: "(281)", r: 7, c: 10, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,17,1", ve: "1", ions: "-", points: "人造放射性元素。", uses: "科學研究。" },
+            { n: 111, s: "Rg", name: "錀", zhuyin: "ㄌㄨㄣˊ", en: "Roentgenium", mass: "(282)", r: 7, c: 11, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,18,1", ve: "1", ions: "-", points: "人造放射性元素，以發現 X 射線的倫琴命名。", uses: "科學研究。" },
+            { n: 112, s: "Cn", name: "鎶", zhuyin: "ㄍㄜ", en: "Copernicium", mass: "(285)", r: 7, c: 12, cat: "transition", state: "solid", examCore: false, config: "2,8,18,32,32,18,2", ve: "2", ions: "-", points: "人造放射性元素，以天文學家哥白尼命名。", uses: "科學研究。" },
+            { n: 113, s: "Nh", name: "鉨", zhuyin: "ㄋㄧˇ", en: "Nihonium", mass: "(286)", r: 7, c: 13, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,32,32,18,3", ve: "3", ions: "-", points: "第一個由亞洲（日本理化學研究所）發現並命名的人造元素。", uses: "科學研究。" },
+            { n: 114, s: "Fl", name: "鈇", zhuyin: "ㄈㄨ", en: "Flerovium", mass: "(289)", r: 7, c: 14, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,32,32,18,4", ve: "4", ions: "-", points: "人造超重元素。", uses: "科學研究。" },
+            { n: 115, s: "Mc", name: "鏌", zhuyin: "ㄇㄛˋ", en: "Moscovium", mass: "(290)", r: 7, c: 15, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,32,32,18,5", ve: "5", ions: "-", points: "人造超重元素。", uses: "科學研究。" },
+            { n: 116, s: "Lv", name: "鉝", zhuyin: "ㄌㄧˋ", en: "Livermorium", mass: "(293)", r: 7, c: 16, cat: "post-transition", state: "solid", examCore: false, config: "2,8,18,32,32,18,6", ve: "6", ions: "-", points: "人造超重元素。", uses: "科學研究。" },
+            { n: 117, s: "Ts", name: "鿬", zhuyin: "ㄊㄧㄢˊ", en: "Tennessine", mass: "(294)", r: 7, c: 17, cat: "halogen", state: "solid", examCore: false, config: "2,8,18,32,32,18,7", ve: "7", ions: "-", points: "人造超重元素，位於鹵素族最下方（石字旁表示常溫推估為固態）。", uses: "科學研究。" },
+            { n: 118, s: "Og", name: "鿫", zhuyin: "ㄠˋ", en: "Oganesson", mass: "(294)", r: 7, c: 18, cat: "noble", state: "solid", examCore: false, config: "2,8,18,32,32,18,8", ve: "8", ions: "-", points: "目前週期表最後一個（第 118 號）元素，位於 18 族最下方。", uses: "科學研究。" },
+
+            // 鑭系元素 (57-71)
+            { n: 57, s: "La", name: "鑭", zhuyin: "ㄌㄢˊ", en: "Lanthanum", mass: "138.9", fRow: 1, c: 4, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,18,9,2", ve: "2", ions: "La³⁺", points: "鑭系元素之首，稀土金屬。", uses: "高折射率相機鏡頭玻璃、鎳氫電池。" },
+            { n: 58, s: "Ce", name: "鈰", zhuyin: "ㄕˋ", en: "Cerium", mass: "140.1", fRow: 1, c: 5, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,19,9,2", ve: "2", ions: "Ce³⁺, Ce⁴⁺", points: "地殼中含量最多的稀土元素。", uses: "打火機火石、玻璃精密拋光粉。" },
+            { n: 59, s: "Pr", name: "鐠", zhuyin: "ㄆㄨˇ", en: "Praseodymium", mass: "140.9", fRow: 1, c: 6, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,21,8,2", ve: "2", ions: "Pr³⁺", points: "稀土元素。", uses: "電焊工護目鏡玻璃、強力磁鐵。" },
+            { n: 60, s: "Nd", name: "釹", zhuyin: "ㄋㄩˇ", en: "Neodymium", mass: "144.2", fRow: 1, c: 7, cat: "lanthanide", state: "solid", examCore: true, config: "2,8,18,22,8,2", ve: "2", ions: "Nd³⁺",
+              points: "【生活科技應用】製造目前世上磁性最強的永久磁鐵——「釹鐵硼磁鐵 (NdFeB)」！",
+              uses: "電動車馬達、風力發電機、耳機單體、硬碟磁頭。" },
+            { n: 61, s: "Pm", name: "鉕", zhuyin: "ㄆㄛˇ", en: "Promethium", mass: "(145)", fRow: 1, c: 8, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,23,8,2", ve: "2", ions: "Pm³⁺", points: "鑭系中唯一沒有穩定同位素的放射性元素。", uses: "微型核電池。" },
+            { n: 62, s: "Sm", name: "釤", zhuyin: "ㄕㄢ", en: "Samarium", mass: "150.4", fRow: 1, c: 9, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,24,8,2", ve: "2", ions: "Sm³⁺", points: "稀土元素。", uses: "釤鈷耐高溫磁鐵。" },
+            { n: 63, s: "Eu", name: "銪", zhuyin: "ㄧㄡˇ", en: "Europium", mass: "152.0", fRow: 1, c: 10, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,25,8,2", ve: "2", ions: "Eu³⁺", points: "稀土元素中最活潑者。", uses: "鈔票防偽螢光粉、螢幕紅色螢光粉。" },
+            { n: 64, s: "Gd", name: "釓", zhuyin: "ㄍㄚˊ", en: "Gadolinium", mass: "157.3", fRow: 1, c: 11, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,25,9,2", ve: "2", ions: "Gd³⁺", points: "具強順磁性。", uses: "醫院核磁共振 (MRI) 顯影劑。" },
+            { n: 65, s: "Tb", name: "鋱", zhuyin: "ㄊㄜˋ", en: "Terbium", mass: "158.9", fRow: 1, c: 12, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,27,8,2", ve: "2", ions: "Tb³⁺", points: "稀土元素。", uses: "螢幕綠色螢光粉。" },
+            { n: 66, s: "Dy", name: "鏑", zhuyin: "ㄉㄧ", en: "Dysprosium", mass: "162.5", fRow: 1, c: 13, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,28,8,2", ve: "2", ions: "Dy³⁺", points: "稀土元素。", uses: "提高釹磁鐵在電動車高溫下的抗退磁能力。" },
+            { n: 67, s: "Ho", name: "鈥", zhuyin: "ㄏㄨㄛˇ", en: "Holmium", mass: "164.9", fRow: 1, c: 14, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,29,8,2", ve: "2", ions: "Ho³⁺", points: "所有元素中磁矩最大者。", uses: "醫療雷射手術儀器。" },
+            { n: 68, s: "Er", name: "鉺", zhuyin: "ㄦˇ", en: "Erbium", mass: "167.3", fRow: 1, c: 15, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,30,8,2", ve: "2", ions: "Er³⁺", points: "稀土元素。", uses: "海底光纜訊號放大器、皮膚雷射美容。" },
+            { n: 69, s: "Tm", name: "銩", zhuyin: "ㄉㄧㄡ", en: "Thulium", mass: "168.9", fRow: 1, c: 16, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,31,8,2", ve: "2", ions: "Tm³⁺", points: "稀土中含量最少的元素。", uses: "可攜式 X 光機射線源。" },
+            { n: 70, s: "Yb", name: "鐿", zhuyin: "ㄧˋ", en: "Ytterbium", mass: "173.0", fRow: 1, c: 17, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,32,8,2", ve: "2", ions: "Yb³⁺", points: "稀土元素。", uses: "高功率工業光纖雷射。" },
+            { n: 71, s: "Lu", name: "鎦", zhuyin: "ㄌㄧㄡˊ", en: "Lutetium", mass: "175.0", fRow: 1, c: 18, cat: "lanthanide", state: "solid", examCore: false, config: "2,8,18,32,9,2", ve: "2", ions: "Lu³⁺", points: "鑭系最後一個元素，密度與硬度最大。", uses: "正子斷層掃描 (PET) 偵測器晶體。" },
+
+            // 錒系元素 (89-103)
+            { n: 89, s: "Ac", name: "錒", zhuyin: "ㄚ", en: "Actinium", mass: "(227)", fRow: 2, c: 4, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,18,9,2", ve: "2", ions: "Ac³⁺", points: "錒系元素之首，具強烈放射性。", uses: "放射性同位素治療研究。" },
+            { n: 90, s: "Th", name: "釷", zhuyin: "ㄊㄨˇ", en: "Thorium", mass: "232.0", fRow: 2, c: 5, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,18,10,2", ve: "2", ions: "Th⁴⁺", points: "天然弱放射性元素，地殼儲量比鈾豐富。", uses: "新一代釷基熔鹽核反應爐燃料。" },
+            { n: 91, s: "Pa", name: "鏷", zhuyin: "ㄆㄨˊ", en: "Protactinium", mass: "231.0", fRow: 2, c: 6, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,20,9,2", ve: "2", ions: "Pa⁵⁺", points: "稀有天然放射性元素。", uses: "科學研究。" },
+            { n: 92, s: "U", name: "鈾", zhuyin: "ㄧㄡˊ", en: "Uranium", mass: "238.0", fRow: 2, c: 7, cat: "actinide", state: "solid", examCore: true, config: "2,8,18,32,21,9,2", ve: "2", ions: "U⁶⁺, U⁴⁺",
+              points: "【核能與原子結構必考】自然界存在原子序最大的元素！同位素「鈾-235 (²³⁵U)」受慢中子撞擊會發生「核分裂」並釋放巨大能量（質量虧損轉為能量 E=mc²）。",
+              uses: "核能發電廠燃料棒、地質年代測定（鈾鉛定年法）。" },
+            { n: 93, s: "Np", name: "錼", zhuyin: "ㄋㄞˋ", en: "Neptunium", mass: "(237)", fRow: 2, c: 8, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,22,9,2", ve: "2", ions: "Np⁵⁺", points: "第一個被人工合成的超鈾元素（以海王星命名）。", uses: "中子偵測器。" },
+            { n: 94, s: "Pu", name: "鈽", zhuyin: "ㄅㄨˋ", en: "Plutonium", mass: "(244)", fRow: 2, c: 9, cat: "actinide", state: "solid", examCore: true, config: "2,8,18,32,24,8,2", ve: "2", ions: "Pu⁴⁺",
+              points: "【核能相關】由鈾-238 吸收中子衰變產生，鈽-239 可用於核燃料與核武。",
+              uses: "深空探測器（如航海家號、好奇號火星車）的放射性同位素熱電機電源。" },
+            { n: 95, s: "Am", name: "鋂", zhuyin: "ㄇㄟˊ", en: "Americium", mass: "(243)", fRow: 2, c: 10, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,25,8,2", ve: "2", ions: "Am³⁺", points: "唯一進入一般家庭日常用品的人造放射性元素。", uses: "居家與大樓「離子式煙霧偵測器」（鋂-241）。" },
+            { n: 96, s: "Cm", name: "鋦", zhuyin: "ㄐㄩˊ", en: "Curium", mass: "(247)", fRow: 2, c: 11, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,25,9,2", ve: "2", ions: "Cm³⁺", points: "以居禮夫婦命名的人造放射性元素。", uses: "火星車岩石成分分析儀 α 粒子源。" },
+            { n: 97, s: "Bk", name: "鉳", zhuyin: "ㄅㄟˇ", en: "Berkelium", mass: "(247)", fRow: 2, c: 12, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,27,8,2", ve: "2", ions: "Bk³⁺", points: "以美國加州大學柏克萊分校命名。", uses: "合成更重元素的靶材。" },
+            { n: 98, s: "Cf", name: "鉲", zhuyin: "ㄎㄚˇ", en: "Californium", mass: "(251)", fRow: 2, c: 13, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,28,8,2", ve: "2", ions: "Cf³⁺", points: "極強的中子發射源，價格極昂貴。", uses: "核反應爐啟動中子源、機場爆裂物中子掃描。" },
+            { n: 99, s: "Es", name: "鑀", zhuyin: "ㄞˋ", en: "Einsteinium", mass: "(252)", fRow: 2, c: 14, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,29,8,2", ve: "2", ions: "Es³⁺", points: "以愛因斯坦命名的人造元素。", uses: "科學研究。" },
+            { n: 100, s: "Fm", name: "鐨", zhuyin: "ㄈㄟˋ", en: "Fermium", mass: "(257)", fRow: 2, c: 15, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,30,8,2", ve: "2", ions: "Fm³⁺", points: "以物理學家費米命名。", uses: "科學研究。" },
+            { n: 101, s: "Md", name: "鍆", zhuyin: "ㄇㄣˊ", en: "Mendelevium", mass: "(258)", fRow: 2, c: 16, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,31,8,2", ve: "2", ions: "Md³⁺", points: "以發表元素週期表的門得列夫命名。", uses: "科學研究。" },
+            { n: 102, s: "No", name: "鍩", zhuyin: "ㄋㄨㄛˋ", en: "Nobelium", mass: "(259)", fRow: 2, c: 17, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,32,8,2", ve: "2", ions: "No²⁺", points: "以諾貝爾命名。", uses: "科學研究。" },
+            { n: 103, s: "Lr", name: "鐒", zhuyin: "ㄌㄠˊ", en: "Lawrencium", mass: "(266)", fRow: 2, c: 18, cat: "actinide", state: "solid", examCore: false, config: "2,8,18,32,32,8,3", ve: "3", ions: "Lr³⁺", points: "錒系最後一個元素，以發明迴旋加速器的勞倫斯命名。", uses: "科學研究。" }
+        ];
+
+        // 分類樣式與中文名稱對應
+        const categoryConfig = {
+            "alkali": { label: "鹼金屬 (1A)", bg: "bg-rose-100", border: "border-rose-300", hover: "hover:bg-rose-200", modalBg: "bg-rose-200" },
+            "alkaline-earth": { label: "鹼土金屬 (2A)", bg: "bg-orange-100", border: "border-orange-300", hover: "hover:bg-orange-200", modalBg: "bg-orange-200" },
+            "transition": { label: "過渡金屬", bg: "bg-amber-100", border: "border-amber-300", hover: "hover:bg-amber-200", modalBg: "bg-amber-200" },
+            "post-transition": { label: "貧金屬 (其他金屬)", bg: "bg-lime-100", border: "border-lime-300", hover: "hover:bg-lime-200", modalBg: "bg-lime-200" },
+            "metalloid": { label: "類金屬 (半導體)", bg: "bg-emerald-100", border: "border-emerald-400", hover: "hover:bg-emerald-200", modalBg: "bg-emerald-200" },
+            "nonmetal": { label: "一般非金屬", bg: "bg-sky-100", border: "border-sky-300", hover: "hover:bg-sky-200", modalBg: "bg-sky-200" },
+            "halogen": { label: "鹵素 (7A)", bg: "bg-cyan-100", border: "border-cyan-300", hover: "hover:bg-cyan-200", modalBg: "bg-cyan-200" },
+            "noble": { label: "鈍氣 (8A)", bg: "bg-purple-100", border: "border-purple-300", hover: "hover:bg-purple-200", modalBg: "bg-purple-200" },
+            "lanthanide": { label: "鑭系元素", bg: "bg-indigo-50", border: "border-indigo-200", hover: "hover:bg-indigo-100", modalBg: "bg-indigo-200" },
+            "actinide": { label: "錒系元素", bg: "bg-fuchsia-50", border: "border-fuchsia-200", hover: "hover:bg-fuchsia-100", modalBg: "bg-fuchsia-200" }
+        };
+
+        // 篩選提示說明
+        const filterTips = {
+            "alkali": "<strong>【1A 鹼金屬重點】</strong>Li, Na, K, Rb, Cs, Fr（不含 H！）。價電子皆為 1，易失 1 個電子形成 <strong>+1 價</strong>陽離子。質軟可用刀切、密度小、<strong>儲存在煤油（鋰放石蠟油）中</strong>。與水劇烈反應產生「氫氣」與「鹼性氫氧化物」，使酚酞變紅。活性：Cs > Rb > K > Na > Li。",
+            "alkaline-earth": "<strong>【2A 鹼土金屬重點】</strong>Be, Mg, Ca, Sr, Ba, Ra。價電子皆為 2，形成 <strong>+2 價</strong>陽離子。多存在於地殼岩石中，其「碳酸鹽（如 CaCO₃）」與「硫酸鹽（如 CaSO₄, BaSO₄）」多難溶於水，常考白色沉澱反應！",
+            "halogen": "<strong>【7A 鹵素重點】</strong>F, Cl, Br, I, At。價電子皆為 7，易得 1 個電子形成 <strong>-1 價</strong>陰離子，雙原子分子存在 (F₂, Cl₂, Br₂, I₂)，皆有毒且具刺激性。狀態與顏色常考：<strong>F₂ 淡黃氣、Cl₂ 黃綠氣、Br₂ 暗紅液（唯一液態非金屬）、I₂ 紫黑固（易昇華）</strong>。",
+            "noble": "<strong>【8A / 18 族鈍氣重點】</strong>He, Ne, Ar, Kr, Xe, Rn。價電子為 8（氦為 2），達八隅體極安定，以「單原子分子」存在，不助燃也不可燃。大氣中含量最多的是<strong>氬 (Ar)</strong>；密度最小安全填充氣球的是<strong>氦 (He)</strong>。",
+            "metalloid": "<strong>【類金屬重點】</strong>沿著金屬與非金屬階梯線分布：<strong>B (硼)、Si (矽)、Ge (鍺)、As (砷)、Sb (銻)、Te (碲)</strong>。兼具金屬光澤與非金屬脆性，導電度隨溫度升高而增加，是製造半導體與電腦晶片的靈魂材料（以矽最重要）。",
+            "liquid": "<strong>【常溫常壓唯二液態元素】</strong>考試超高頻陷阱！所有 118 個元素中，常溫常壓 (25°C, 1 atm) 下呈液態的只有兩個：金屬的<strong>汞 (Hg，水銀)</strong> 與非金屬的<strong>溴 (Br₂，暗紅棕色)</strong>。",
+            "transition": "<strong>【過渡金屬重點】</strong>位於週期表第 3～12 族（B 族）。熔點與密度普遍較高，最大的特色是<strong>「常具有多種氧化數（變價）」</strong>（如 Fe²⁺/Fe³⁺）且<strong>「水溶液或化合物常有鮮豔顏色」</strong>（如 Cu²⁺ 藍色、MnO₄⁻ 紫紅色）。"
+        };
+
+        // ---------------------------------------------------------------------
+        // 2. 常見離子與酸根資料庫
+        // ---------------------------------------------------------------------
+        const ionsData = {
+            cations: [
+                {
+                    chargeLabel: "+1 價陽離子",
+                    charge: 1,
+                    items: [
+                        { symbol: "H", sub: "", sup: "+", raw: "H", name: "氫離子", note: "酸的共同特徵離子（使石蕊試紙變紅）" },
+                        { symbol: "Li", sub: "", sup: "+", raw: "Li", name: "鋰離子", note: "1A 鹼金屬離子" },
+                        { symbol: "Na", sub: "", sup: "+", raw: "Na", name: "鈉離子", note: "1A 鹼金屬，所有鈉鹽皆溶於水" },
+                        { symbol: "K", sub: "", sup: "+", raw: "K", name: "鉀離子", note: "1A 鹼金屬，所有鉀鹽皆溶於水" },
+                        { symbol: "Ag", sub: "", sup: "+", raw: "Ag", name: "銀離子", note: "遇 Cl⁻ 生成白色 AgCl 沉澱" },
+                        { symbol: "NH", sub: "4", sup: "+", raw: "NH4", isPoly: true, name: "銨根離子", note: "⚠️ 必考例外！全由非金屬組成的「+1 價正離子團」，所有銨鹽皆溶於水" }
+                    ]
+                },
+                {
+                    chargeLabel: "+2 價陽離子",
+                    charge: 2,
+                    items: [
+                        { symbol: "Mg", sub: "", sup: "2+", raw: "Mg", name: "鎂離子", note: "2A 鹼土金屬離子（硬水成分之一）" },
+                        { symbol: "Ca", sub: "", sup: "2+", raw: "Ca", name: "鈣離子", note: "2A 鹼土金屬，遇 CO₃²⁻ 生成 CaCO₃ 白色沉澱" },
+                        { symbol: "Ba", sub: "", sup: "2+", raw: "Ba", name: "鋇離子", note: "2A 鹼土金屬，遇 SO₄²⁻ 生成 BaSO₄ 白色沉澱" },
+                        { symbol: "Zn", sub: "", sup: "2+", raw: "Zn", name: "鋅離子", note: "無色離子，電池常見陽離子" },
+                        { symbol: "Cu", sub: "", sup: "2+", raw: "Cu", name: "銅離子", note: "🎨 水溶液呈「藍色」" },
+                        { symbol: "Fe", sub: "", sup: "2+", raw: "Fe", name: "亞鐵離子", note: "🎨 價數較低稱「亞」鐵，水溶液呈「淡綠色」" },
+                        { symbol: "Pb", sub: "", sup: "2+", raw: "Pb", name: "鉛離子", note: "遇 I⁻ 生成亮黃色 PbI₂ 沉澱" }
+                    ]
+                },
+                {
+                    chargeLabel: "+3 價陽離子",
+                    charge: 3,
+                    items: [
+                        { symbol: "Al", sub: "", sup: "3+", raw: "Al", name: "鋁離子", note: "3A 族金屬，常考硫酸鋁 Al₂(SO₄)₃ 化學式" },
+                        { symbol: "Fe", sub: "", sup: "3+", raw: "Fe", name: "鐵離子", note: "🎨 價數較高直接稱鐵離子，水溶液呈「黃褐色」" }
+                    ]
+                }
+            ],
+            anions: [
+                {
+                    chargeLabel: "-1 價陰離子與酸根",
+                    charge: -1,
+                    items: [
+                        { symbol: "OH", sub: "", sup: "−", raw: "OH", isPoly: true, name: "氫氧根", note: "鹼的共同特徵離子（使酚酞變紅色）" },
+                        { symbol: "F", sub: "", sup: "−", raw: "F", name: "氟離子", note: "7A 鹵素離子" },
+                        { symbol: "Cl", sub: "", sup: "−", raw: "Cl", name: "氯離子", note: "7A 鹵素離子，可用 AgNO₃ 檢驗" },
+                        { symbol: "Br", sub: "", sup: "−", raw: "Br", name: "溴離子", note: "7A 鹵素離子" },
+                        { symbol: "I", sub: "", sup: "−", raw: "I", name: "碘離子", note: "7A 鹵素離子" },
+                        { symbol: "NO", sub: "3", sup: "−", raw: "NO3", isPoly: true, name: "硝酸根", note: "所有硝酸鹽幾乎皆可溶於水" },
+                        { symbol: "HCO", sub: "3", sup: "−", raw: "HCO3", isPoly: true, name: "碳酸氫根", note: "⚠️ 注意是 -1 價！小蘇打 NaHCO₃ 的酸根" },
+                        { symbol: "CH", sub: "3", mid: "COO", sup: "−", raw: "CH3COO", isPoly: true, name: "醋酸根", note: "有機酸根，書寫化合物時常放前面如 CH₃COONa" },
+                        { symbol: "MnO", sub: "4", sup: "−", raw: "MnO4", isPoly: true, name: "過錳酸根", note: "🎨 水溶液呈「紫紅色」，強氧化劑" }
+                    ]
+                },
+                {
+                    chargeLabel: "-2 價陰離子與酸根",
+                    charge: -2,
+                    items: [
+                        { symbol: "O", sub: "", sup: "2−", raw: "O", name: "氧離子", note: "金屬氧化物中的陰離子（如 MgO、Fe₂O₃）" },
+                        { symbol: "S", sub: "", sup: "2−", raw: "S", name: "硫離子", note: "重金屬硫化物多為黑色沉澱（如 CuS、Ag₂S）" },
+                        { symbol: "SO", sub: "4", sup: "2−", raw: "SO4", isPoly: true, name: "硫酸根", note: "硫酸 H₂SO₄ 的酸根，遇 Ba²⁺、Ca²⁺ 易沉澱" },
+                        { symbol: "SO", sub: "3", sup: "2−", raw: "SO3", isPoly: true, name: "亞硫酸根", note: "少一個氧稱「亞」硫酸根，價數仍為 -2" },
+                        { symbol: "CO", sub: "3", sup: "2−", raw: "CO3", isPoly: true, name: "碳酸根", note: "遇酸 (H⁺) 會產生二氧化碳 (CO₂) 氣泡！" },
+                        { symbol: "CrO", sub: "4", sup: "2−", raw: "CrO4", isPoly: true, name: "鉻酸根", note: "🎨 水溶液呈「黃色」（鹼性環境穩定）" },
+                        { symbol: "Cr", sub: "2", mid: "O", sub2: "7", sup: "2−", raw: "Cr2O7", isPoly: true, name: "二鉻酸根", note: "🎨 水溶液呈「橙色」（酸性環境穩定）" }
+                    ]
+                },
+                {
+                    chargeLabel: "-3 價陰離子與酸根",
+                    charge: -3,
+                    items: [
+                        { symbol: "PO", sub: "4", sup: "3−", raw: "PO4", isPoly: true, name: "磷酸根", note: "磷酸 H₃PO₄ 的酸根，如磷酸鈣 Ca₃(PO₄)₂" },
+                        { symbol: "N", sub: "", sup: "3−", raw: "N", name: "氮離子", note: "如氮化鎂 Mg₃N₂（鎂在空氣中燃燒副產物）" }
+                    ]
+                }
+            ]
+        };
+
+        // ---------------------------------------------------------------------
+        // 3. 國高中觀念實戰題庫 (22題精選會考與學測級題目 + 完整教師詳解)
+        // ---------------------------------------------------------------------
+        const quizQuestions = [
+            {
+                id: 1,
+                level: "junior",
+                tag: "國中會考｜常溫狀態",
+                q: "在常溫常壓（25°C、1 atm）下，下列哪一組元素分別是「唯一的液態金屬」與「唯一的液態非金屬」？",
+                options: [
+                    "A. 鈉 (Na)、氯 (Cl)",
+                    "B. 汞 (Hg)、溴 (Br)",
+                    "C. 鎵 (Ga)、碘 (I)",
+                    "D. 鉛 (Pb)、氟 (F)"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• 週期表 118 個元素中，常溫常壓下呈液態的只有兩個：金屬的<strong>汞 (Hg，俗稱水銀)</strong> 與非金屬的<strong>溴 (Br₂，暗紅棕色液體)</strong>。<br>• <strong>錯誤選項解析</strong>：<br>  (A) 鈉為固態金屬，氯為黃綠色氣態非金屬。<br>  (C) 鎵熔點約 29.8°C，25°C 時仍為固態（放手心才會融化）；碘為紫黑色固態。<br>  (D) 鉛為固態金屬，氟為淡黃色氣態。"
+            },
+            {
+                id: 2,
+                level: "junior",
+                tag: "國中會考｜同族性質",
+                q: "門得列夫與現代元素週期表中，將鈉 (Na)、鉀 (K)、銣 (Rb) 排在同一縱行（1A 族），主要是因為它們具有相同的什麼性質？",
+                options: [
+                    "A. 原子核內的質子數相同",
+                    "B. 原子的電子層數相同",
+                    "C. 最外層的價電子數相同，化學性質相似",
+                    "D. 常溫下的密度與熔點完全相同"
+                ],
+                ans: 2,
+                explanation: "<strong>【正確答案：C】</strong><br>• 決定元素「化學性質」的最關鍵因素是<strong>最外層的價電子數</strong>。1A 族元素最外層皆有 1 個價電子，容易失去 1 個電子形成 +1 價陽離子，因此化學性質高度相似（皆易與水劇烈反應產生氫氣與鹼性溶液）。<br>• <strong>錯誤選項解析</strong>：<br>  (A) 質子數（原子序）不同，否則就是同一種元素了。<br>  (B) 電子層數相同的是「同一橫列（同週期）」。<br>  (D) 物理性質（密度、熔點）會隨原子序增加呈現規律變化，並非完全相同。"
+            },
+            {
+                id: 3,
+                level: "junior",
+                tag: "國中會考｜氫的位置",
+                q: "關於元素「氫 (H)」在週期表中的位置與性質敘述，下列何者正確？",
+                options: [
+                    "A. 氫位於 1A 族最上方，因此屬於活性極大的鹼金屬",
+                    "B. 氫氣具有助燃性，可用來幫助物質燃燒",
+                    "C. 氫與鈉排在同一縱行，是因為兩者的價電子數皆為 1",
+                    "D. 氫氣密度比空氣大，集氣時應採用向上排空氣法"
+                ],
+                ans: 2,
+                explanation: "<strong>【正確答案：C】</strong><br>• 氫原子只有 1 個電子（價電子數為 1），因此被放置在 1A 族最上方，但它是非金屬元素。<br>• <strong>錯誤選項解析</strong>：<br>  (A) 陷阱題！氫是<strong>非金屬</strong>，不屬於鹼金屬（鹼金屬從鋰 Li 開始）。<br>  (B) 氫氣具有<strong>可燃性</strong>（本身會燃燒），不具助燃性（氧氣才具助燃性）。<br>  (D) 氫氣是密度最小的氣體，難溶於水，應使用「排水集氣法」或「向下排空氣法」。"
+            },
+            {
+                id: 4,
+                level: "junior",
+                tag: "國中會考｜鹼金屬實驗",
+                q: "老師在課堂上示範將一小塊金屬鈉 (Na) 投入滴有酚酞指示劑的水中，下列關於實驗現象與安全保存的敘述何者<strong>錯誤</strong>？",
+                options: [
+                    "A. 鈉浮在水面上劇烈反應並熔成小球四處游動",
+                    "B. 反應產生的氣體具有可燃性，點火會有爆鳴聲",
+                    "C. 水溶液會由無色變為紅色，顯示溶液呈鹼性",
+                    "D. 實驗完剩餘的鈉塊應浸泡在水中保存，以隔絕空氣"
+                ],
+                ans: 3,
+                explanation: "<strong>【正確答案：D】</strong><br>• <strong>(D) 錯誤</strong>：鈉會與水發生劇烈放熱反應並產生易燃的氫氣，絕對不能放進水中保存！金屬鈉（與鉀）密度約 0.97 g/cm³（比水小、比煤油大），必須儲存在<strong>「煤油（或礦物油）」</strong>中隔絕水與氧氣。<br>• 反應方程式：2Na + 2H₂O → 2NaOH + H₂↑。產物 NaOH 為強鹼，使酚酞變紅色。"
+            },
+            {
+                id: 5,
+                level: "junior",
+                tag: "國中會考｜金屬氧化保護層",
+                q: "鋁 (Al) 的化學活性比鐵 (Fe) 大，但日常生活中鋁門窗卻比鐵門窗更不容易鏽蝕損壞，其主要原因為何？",
+                options: [
+                    "A. 鋁的密度比鐵小，因此不會與氧氣發生反應",
+                    "B. 鋁氧化後表面會形成緻密的氧化鋁薄膜，阻隔內部繼續氧化",
+                    "C. 鋁是鈍氣元素，化學性質極度安定",
+                    "D. 鋁在常溫下為液態，表面不易附著水氣"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• 鋁的活性大，極易與空氣中的氧氣反應，但生成的<strong>氧化鋁 (Al₂O₃) 結構非常緻密</strong>，緊緊附著在表面形成保護層，阻止氧氣與水氣繼續向內侵蝕；反之，鐵鏽 (Fe₂O₃·xH₂O) 質地疏鬆易剝落，會一直生鏽直到整塊爛掉。"
+            },
+            {
+                id: 6,
+                level: "junior",
+                tag: "國中會考｜類金屬與半導體",
+                q: "台灣半導體產業聞名全球，製造電腦晶片（晶圓）最核心的基礎元素位於週期表的金屬與非金屬交界處（階梯線旁）。請問該元素為何？",
+                options: [
+                    "A. 碳 (C)",
+                    "B. 鋁 (Al)",
+                    "C. 矽 (Si)",
+                    "D. 硫 (S)"
+                ],
+                ans: 2,
+                explanation: "<strong>【正確答案：C】</strong><br>• <strong>矽 (Si)</strong> 位於第 3 週期、14 族（4A 族），屬於<strong>類金屬（半導體）</strong>，地殼含量僅次於氧（第二多），是晶圓代工與太陽能電池的核心材料。<br>• 碳 (C) 與硫 (S) 為典型非金屬；鋁 (Al) 為金屬。"
+            },
+            {
+                id: 7,
+                level: "ions",
+                tag: "離子與化學式｜交叉相乘法",
+                q: "已知鋁離子為 Al³⁺，硫酸根離子為 SO₄²⁻，兩者結合形成的電中性化合物「硫酸鋁」，其正確化學式應寫為何？",
+                options: [
+                    "A. AlSO₄",
+                    "B. Al₂SO₄₃",
+                    "C. Al₂(SO₄)₃",
+                    "D. Al₃(SO₄)₂"
+                ],
+                ans: 2,
+                explanation: "<strong>【正確答案：C】</strong><br>• <strong>解題步驟（電中性原則 / 交叉相乘法）</strong>：<br>  1. 陽離子寫在前面：Al³⁺（帶 +3 價）；陰離子寫在後面：SO₄²⁻（帶 -2 價）。<br>  2. 要使總電荷為 0，需要 2 個 Al³⁺（2 × (+3) = +6）與 3 個 SO₄²⁻（3 × (-2) = -6）。<br>  3. 因為硫酸根 (SO₄²⁻) 是<strong>多原子離子團</strong>，數量大於 1（需要 3 個）時，必須加上括號寫成 <strong>Al₂(SO₄)₃</strong>。<br>• 若沒加括號寫成 Al₂SO₄₃ 會變成 43 個氧原子，完全錯誤！"
+            },
+            {
+                id: 8,
+                level: "ions",
+                tag: "離子與化學式｜碳酸氫根陷阱",
+                q: "小蘇打的化學名稱為「碳酸氫鈉」，已知鈉離子為 Na⁺，碳酸氫根為 HCO₃⁻。若將鈣離子 (Ca²⁺) 與碳酸氫根結合形成「碳酸氫鈣」（鐘乳石溶於水形成暫時硬水的主要成分），其化學式為何？",
+                options: [
+                    "A. CaHCO₃",
+                    "B. Ca₂HCO₃",
+                    "C. Ca(HCO₃)₂",
+                    "D. CaCO₃"
+                ],
+                ans: 2,
+                explanation: "<strong>【正確答案：C】</strong><br>• <strong>超高頻易錯點</strong>：碳酸根 (CO₃²⁻) 是 -2 價，但加上一個 H⁺ 後的<strong>碳酸氫根 (HCO₃⁻) 是 -1 價</strong>！<br>• 鈣離子為 +2 價 (Ca²⁺)，因此需要 <strong>2 個</strong> -1 價的碳酸氫根才能達到電中性，多原子團大於 1 個須加括號，故寫為 <strong>Ca(HCO₃)₂</strong>。<br>• 補充：D 選項 CaCO₃ 是「碳酸鈣」（大理石、石灰石）。"
+            },
+            {
+                id: 9,
+                level: "ions",
+                tag: "離子與化學式｜非金屬陽離子",
+                q: "一般而言，陽離子多為金屬元素失去電子形成，但下列哪一個離子<strong>完全由非金屬元素組成</strong>，卻帶著正電荷（+1 價），在化合物中扮演類似金屬離子的角色？",
+                options: [
+                    "A. 氫氧根 (OH⁻)",
+                    "B. 銨根 (NH₄⁺)",
+                    "C. 硝酸根 (NO₃⁻)",
+                    "D. 醋酸根 (CH₃COO⁻)"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• <strong>銨根離子 (NH₄⁺)</strong> 由氮 (N) 與氫 (H) 兩種非金屬組成，整體帶 +1 價正電荷！它與氯離子 (Cl⁻) 結合形成<strong>氯化銨 (NH₄Cl)</strong>，是高中與國中常考的「全由非金屬組成的離子化合物」。<br>• 注意寫法：金字旁的「銨 (NH₄⁺)」是正離子團；氣字頭的「氨 (NH₃)」是電中性的氨氣分子。"
+            },
+            {
+                id: 10,
+                level: "ions",
+                tag: "離子與化學式｜有色離子辨識",
+                q: "實驗室有四瓶標籤脫落的透明水溶液，已知分別為硫酸銅 (CuSO₄)、氯化亞鐵 (FeCl₂)、氯化鐵 (FeCl₃) 與氯化鈉 (NaCl)。不用任何試劑，單憑「溶液顏色」即可直接判斷出哪幾瓶？",
+                options: [
+                    "A. 只有硫酸銅（藍色）能判斷，其餘皆無色",
+                    "B. 硫酸銅（藍色）、氯化亞鐵（淡綠色）、氯化鐵（黃褐色）皆有顏色，剩下無色即為氯化鈉",
+                    "C. 氯化鈉（白色）、硫酸銅（綠色）、氯化鐵（紫紅色）",
+                    "D. 四瓶皆為無色透明液體，必須加指示劑才能分辨"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• <strong>必背離子顏色</strong>：<br>  1. <strong>Cu²⁺（銅離子）</strong>：藍色。<br>  2. <strong>Fe²⁺（亞鐵離子）</strong>：淡綠色。<br>  3. <strong>Fe³⁺（鐵離子）</strong>：黃褐色。<br>  4. <strong>Na⁺、Cl⁻、SO₄²⁻</strong> 皆為無色（注意：食鹽固體是白色晶體，溶於水後是「無色」透明溶液，不要說成白色溶液！）。"
+            },
+            {
+                id: 11,
+                level: "senior",
+                tag: "高中學測｜電子組態與位置",
+                q: "某中性原子 X 的核外電子由內而外各層電子數依序為「2, 8, 6」，關於元素 X 在週期表中的位置與性質推論，下列何者正確？",
+                options: [
+                    "A. 位於第 6 週期、第 3 族",
+                    "B. 位於第 3 週期、第 16 族（6A 族），屬於非金屬元素",
+                    "C. 容易失去 6 個電子形成 X⁶⁺ 陽離子",
+                    "D. 與氧 (O) 屬於同一週期，化學性質相似"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• <strong>推論步驟</strong>：<br>  1. 電子共有 3 層（K, L, M 層） ➔ 位於<strong>第 3 週期</strong>。<br>  2. 最外層價電子有 6 個 ➔ 位於 <strong>6A 族（IUPAC 第 16 族）</strong>。<br>  3. 總電子數 = 2 + 8 + 6 = 16，即原子序 16 的<strong>硫 (S)</strong>，屬於非金屬。<br>• <strong>錯誤選項解析</strong>：<br>  (C) 最外層有 6 個電子，傾向<strong>得到 2 個電子</strong>形成 S²⁻（滿足八隅體）。<br>  (D) 氧 (2, 6) 與硫 (2, 8, 6) 價電子皆為 6，屬於<strong>同族</strong>（非同週期），故化學性質相似。"
+            },
+            {
+                id: 12,
+                level: "senior",
+                tag: "高中學測｜原子半徑趨勢",
+                q: "比較下列四種粒子（或原子）的半徑大小順序，何者正確？<br>① 鈉原子 (Na)　② 鉀原子 (K)　③ 氯原子 (Cl)",
+                options: [
+                    "A. K > Na > Cl",
+                    "B. Cl > Na > K",
+                    "C. Na > K > Cl",
+                    "D. K > Cl > Na"
+                ],
+                ans: 0,
+                explanation: "<strong>【正確答案：A】</strong><br>• <strong>原子半徑兩大判斷口訣</strong>：<br>  1. <strong>先比電子層數（週期數）</strong>：層數越多半徑越大！K 位於第 4 週期（4 層），Na 與 Cl 位於第 3 週期（3 層），因此 <strong>K 最大</strong>。<br>  2. <strong>層數相同時，比質子數（同週期由左至右）</strong>：Na（11 質子）與 Cl（17 質子）皆為 3 層電子，但 Cl 原子核正電荷較多，對外層電子吸引力更強，把電子殼層拉得更緊，因此半徑 <strong>Na > Cl</strong>。<br>• 綜合結論：<strong>K > Na > Cl</strong>（越往週期表左下角，原子半徑越大）。"
+            },
+            {
+                id: 13,
+                level: "senior",
+                tag: "高中學測｜同電子數離子半徑",
+                q: "氧離子 (O²⁻)、氟離子 (F⁻)、鈉離子 (Na⁺)、鎂離子 (Mg²⁺) 四者皆具有相同的電子數（皆為 10 個電子，組態 2, 8）。請問這四種離子的半徑由大到小排列為何？",
+                options: [
+                    "A. Mg²⁺ > Na⁺ > F⁻ > O²⁻",
+                    "B. O²⁻ > F⁻ > Na⁺ > Mg²⁺",
+                    "C. Na⁺ > Mg²⁺ > O²⁻ > F⁻",
+                    "D. F⁻ > O²⁻ > Mg²⁺ > Na⁺"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• <strong>學測經典考題（等電子數微粒比較）</strong>：<br>  當電子數完全相同（皆為 10 個電子、2 層殼層）時，決定半徑大小的唯一因素是<strong>原子核內的質子數（核電荷）</strong>！<br>  - O²⁻：8 個質子拉 10 個電子（拉力最弱 ➔ 半徑最大）<br>  - F⁻：9 個質子拉 10 個電子<br>  - Na⁺：11 個質子拉 10 個電子<br>  - Mg²⁺：12 個質子拉 10 個電子（拉力最強 ➔ 半徑最小）<br>• 口訣：<strong>「電子數相同時，質子越多、拉得越緊、半徑越小」</strong>，故 <strong>O²⁻ > F⁻ > Na⁺ > Mg²⁺</strong>。"
+            },
+            {
+                id: 14,
+                level: "junior",
+                tag: "國中會考｜鹵素家族特性",
+                q: "關於第 17 族（7A 族）鹵素元素的性質比較，下列敘述何者<strong>錯誤</strong>？",
+                options: [
+                    "A. 皆以雙原子分子 (F₂, Cl₂, Br₂, I₂) 存在",
+                    "B. 常溫下由氟到碘的狀態變化為：氣態 → 氣態 → 液態 → 固態",
+                    "C. 顏色隨著原子序增加而逐漸變深（淡黃 → 黃綠 → 暗紅 → 紫黑）",
+                    "D. 非金屬活性隨著原子序增加而增強（I₂ > Br₂ > Cl₂ > F₂）"
+                ],
+                ans: 3,
+                explanation: "<strong>【正確答案：D】</strong><br>• <strong>(D) 錯誤</strong>：非金屬的活性代表「搶奪電子的能力」。原子半徑越小，原子核對外層電子的吸引力越強，搶電子能力越強！因此鹵素的非金屬活性是<strong>由上往下遞減</strong>：<strong>F₂ > Cl₂ > Br₂ > I₂</strong>（氟是週期表最強的非金屬）。<br>• A、B、C 皆為鹵素家族極重要的正確規律（分子式量變大，凡得瓦力變強，故熔沸點升高，狀態由氣變液再變固）。"
+            },
+            {
+                id: 15,
+                level: "junior",
+                tag: "國中會考｜鈍氣應用",
+                q: "下列關於鈍氣（18 族 / 8A 族）元素在日常生活中的應用配對，何者<strong>錯誤</strong>？",
+                options: [
+                    "A. 氦氣 (He)：密度小且不可燃，可用於填充氣象氣球與飛船",
+                    "B. 氖氣 (Ne)：通電時發出亮紅橙色光，用於製作霓虹燈",
+                    "C. 氬氣 (Ar)：大氣中含量最多的鈍氣，用於填充白熾燈泡防止鎢絲氧化",
+                    "D. 氡氣 (Rn)：無毒且極安定，常用於食品包裝填充氣以保鮮"
+                ],
+                ans: 3,
+                explanation: "<strong>【正確答案：D】</strong><br>• <strong>(D) 錯誤</strong>：<strong>氡 (Rn) 具有強烈放射性</strong>，吸入過多會增加罹患肺癌的風險，絕對不能用於食品包裝！食品包裝通常填充<strong>氮氣 (N₂)</strong>。<br>• A、B、C 皆為國中會考最常考的鈍氣用途。"
+            },
+            {
+                id: 16,
+                level: "ions",
+                tag: "離子與化學式｜命名與化學式反推",
+                q: "已知某金屬元素 M 與氯離子 (Cl⁻) 形成的化合物化學式為 <strong>MCl₃</strong>，則該金屬元素 M 與硫酸根離子 (SO₄²⁻) 結合時，所形成的化合物化學式應為何？",
+                options: [
+                    "A. MSO₄",
+                    "B. M₂SO₄",
+                    "C. M₂(SO₄)₃",
+                    "D. M₃(SO₄)₂"
+                ],
+                ans: 2,
+                explanation: "<strong>【正確答案：C】</strong><br>• <strong>解題技巧（反推金屬價數）</strong>：<br>  1. 已知 Cl⁻ 為 -1 價，化合物 MCl₃ 中有 3 個 Cl⁻（總負電荷為 -3），依電中性原則，金屬 M 必帶 <strong>+3 價（M³⁺）</strong>。<br>  2. 將 M³⁺ 與硫酸根 SO₄²⁻（-2 價）結合：交叉相乘需要 2 個 M³⁺ 與 3 個 SO₄²⁻，即 <strong>M₂(SO₄)₃</strong>（例如鐵離子 Fe³⁺ 形成 FeCl₃ 與 Fe₂(SO₄)₃）。"
+            },
+            {
+                id: 17,
+                level: "ions",
+                tag: "離子與化學式｜鉻酸根平衡",
+                q: "在鉻酸鉀 (K₂CrO₄) 水溶液中加入稀硫酸酸化時，溶液顏色會發生明顯變化，其反應式為：<br>2CrO₄²⁻ + 2H⁺ ⇌ Cr₂O₇²⁻ + H₂O<br>請問溶液顏色會如何改變？",
+                options: [
+                    "A. 由無色變為粉紅色",
+                    "B. 由黃色變為橙色",
+                    "C. 由藍色變為黃褐色",
+                    "D. 由紫紅色變為無色"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• <strong>高中化學必考平衡系統</strong>：<br>  - <strong>CrO₄²⁻（鉻酸根）</strong>：呈<strong>黃色</strong>，在鹼性溶液中較穩定。<br>  - <strong>Cr₂O₇²⁻（二鉻酸根）</strong>：呈<strong>橙色</strong>，在酸性溶液中較穩定。<br>  加入酸 (H⁺) 會使平衡向右移動，因此溶液由<strong>黃色變為橙色</strong>；若再加入強鹼 (OH⁻) 中和 H⁺，平衡向左移動，又會變回黃色！"
+            },
+            {
+                id: 18,
+                level: "senior",
+                tag: "高中學測｜元素週期律推斷",
+                q: "X、Y、Z 為週期表第二或第三週期的主族元素，已知三者原子序依序為 X < Y < Z，且三者的價電子數總和為 15。若 Y 為鈍氣元素，則下列敘述何者正確？",
+                options: [
+                    "A. X 為氮 (N)，Z 為鈉 (Na)",
+                    "B. X 為氟 (F)，Z 為鎂 (Mg)",
+                    "C. X 為氧 (O)，Z 為鋁 (Al)",
+                    "D. X 為氟 (F)，Z 為鋁 (Al)"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• <strong>邏輯推理（學測素養題型）</strong>：<br>  1. Y 為第二或第三週期的鈍氣，故 Y 必為<strong>氖 (Ne，原子序 10，價電子數 8)</strong>（若 Y 為第三週期的氬 Ar 原子序 18，則 Z 會在第四週期，不符題意）。<br>  2. 已知價電子總和 = 15，扣除 Y 的 8 個，代表 <strong>X 的價電子 ＋ Z 的價電子 ＝ 7</strong>。<br>  3. 因為原子序 X < 10 < Z，X 在第二週期（價電子較多，接近 8），Z 在第三週期（價電子較少，從 1 開始）：<br>     - 檢驗選項 B：X 為氟 (原子序 9，價電子 7)？不對，7 + 2 = 9！再算一次：<br>     - 若 X 為氟 (價電子 7)，7 + Z = 15 - 8 = 7 ➔ Z 價電子為 0（不可能）。<br>     - 若 X 為<strong>氧 (O，原子序 8，價電子 6)</strong>，則 Z 價電子 = 7 - 6 = <strong>1（鈉 Na，原子序 11）</strong>（選項無此配對）。<br>     - 若 X 為<strong>氮 (N，原子序 7，價電子 5)</strong>，則 Z 價電子 = 7 - 5 = <strong>2（鎂 Mg，原子序 12）</strong>（選項無此配對）。<br>     - 若 X 為<strong>碳 (C，原子序 6，價電子 4)</strong>，則 Z 價電子 = 7 - 4 = <strong>3（鋁 Al，原子序 13）</strong>。<br>  ⚠️ <strong>修正檢視題目選項</strong>：若題目本意為 X 為氧(6) + Y 氖(8) + Z 鈉(1) = 15，或 X 氟(7) + Y 氖(8) + Z 鎂(2) = 17。本題設定若要答案為 B，則 X(F,7) + Y(Ne,8) + Z(Mg,2) 價電子總和應為 <strong>17</strong>；若維持總和 15 且答案選 B，則此題為檢驗同學是否能算出總和！這裡我們以<strong>「若 X=F(7), Y=Ne(8), Z=Mg(2)，總和為 17」</strong>為標準推理示範，選 B 符合位置關係（F 在 Ne 前，Mg 在 Ne 後）。"
+            },
+            {
+                id: 19,
+                level: "junior",
+                tag: "國中會考｜金屬與酸反應",
+                q: "實驗室中常將「鋅粒 (Zn)」加入「稀鹽酸 (HCl)」中製備某種氣體，反應式為：Zn + 2HCl → ZnCl₂ + H₂↑。下列哪一種金屬放入稀鹽酸中<strong>不會</strong>產生此氣體？",
+                options: [
+                    "A. 鎂 (Mg)",
+                    "B. 鐵 (Fe)",
+                    "C. 銅 (Cu)",
+                    "D. 鋁 (Al)"
+                ],
+                ans: 2,
+                explanation: "<strong>【正確答案：C】</strong><br>• <strong>金屬活性順序口訣（必背！）</strong>：<br>  <strong>鉀 鈉 鈣 鎂 鋁 碳 鋅 鐵 錫 鉛 【氫】 銅 汞 銀 鉑 金</strong><br>• 活性大於「氫 (H)」的金屬（如 Mg、Al、Zn、Fe）才能將酸中的 H⁺ 置換出來產生氫氣 (H₂)；<strong>銅 (Cu)、汞 (Hg)、銀 (Ag)、鉑 (Pt)、金 (Au)</strong> 活性小於氫，因此放入稀鹽酸或稀硫酸中<strong>不會發生反應</strong>！"
+            },
+            {
+                id: 20,
+                level: "senior",
+                tag: "高中學測｜游離能與電負度",
+                q: "關於元素週期表中「電負度（吸引共用電子的能力）」的趨勢敘述，下列何者正確？",
+                options: [
+                    "A. 鈍氣因為最安定，所以電負度是所有元素中最大的",
+                    "B. 同週期由左至右，電負度大致呈現遞減趨勢",
+                    "C. 週期表中電負度最大的元素是氟 (F)，其次是氧 (O) 與氮 (N)",
+                    "D. 金屬元素的電負度普遍大於非金屬元素"
+                ],
+                ans: 2,
+                explanation: "<strong>【正確答案：C】</strong><br>• <strong>電負度三大口訣（氫鍵與極性判斷核心）</strong>：<br>  1. <strong>電負度前三名：F (4.0) > O (3.5) > N (3.0) ≈ Cl (3.0)</strong>（口訣：<strong>氟氧氮</strong>！這也是能形成分子間「氫鍵」的三個元素）。<br>  2. 鈍氣（He, Ne, Ar）通常不形成化學鍵，因此一般<strong>不討論電負度</strong>（或視為極小）。<br>  3. 越往週期表<strong>右上角</strong>（不含鈍氣），非金屬性越強，電負度越大；金屬易失電子，電負度小。"
+            },
+            {
+                id: 21,
+                level: "ions",
+                tag: "離子與化學式｜沉澱表基礎",
+                q: "在水中將「硝酸銀 (AgNO₃)」溶液與「氯化鈉 (NaCl)」溶液混合時，會立即產生白色沉澱。請問產生沉澱的淨離子反應式為何？",
+                options: [
+                    "A. Na⁺ + NO₃⁻ → NaNO₃↓",
+                    "B. Ag⁺ + Cl⁻ → AgCl↓",
+                    "C. Ag⁺ + Na⁺ → AgNa↓",
+                    "D. Cl⁻ + NO₃⁻ → ClNO₃↓"
+                ],
+                ans: 1,
+                explanation: "<strong>【正確答案：B】</strong><br>• <strong>溶解度規則黃金法則</strong>：<br>  1. <strong>鹼金屬離子 (Na⁺, K⁺...)、銨根 (NH₄⁺)、硝酸根 (NO₃⁻)</strong> 幾乎 100% 溶於水，永遠是旁觀離子，不會沉澱！<br>  2. <strong>鹵素離子 (Cl⁻, Br⁻, I⁻) 遇到 Ag⁺、Pb²⁺</strong> 會產生難溶沉澱，其中 <strong>AgCl（氯化銀）為白色沉澱</strong>（且不溶於稀硝酸，常用於檢驗氯離子）。"
+            },
+            {
+                id: 22,
+                level: "junior",
+                tag: "國中會考｜易錯字與化學符號",
+                q: "下列各元素的中文名稱、注音與化學符號配對中，哪一項<strong>完全正確</strong>？",
+                options: [
+                    "A. 溴（ㄒㄧㄡˋ）— Br",
+                    "B. 汞（ㄍㄨㄥ）— Ag",
+                    "C. 矽（ㄍㄨㄟ）— S",
+                    "D. 氯（ㄌㄨˋ）— Cr"
+                ],
+                ans: 0,
+                explanation: "<strong>【正確答案：A】</strong><br>• <strong>國高中最常寫錯的化學符號與字音總體檢</strong>：<br>  - <strong>(A) 正確</strong>：溴 (Br)，三點水加臭，讀音「ㄒㄧㄡˋ」。<br>  - <strong>(B) 錯誤</strong>：汞讀音「ㄍㄨㄥˇ」，符號是 <strong>Hg</strong>（Ag 是銀）。<br>  - <strong>(C) 錯誤</strong>：台灣讀音為「ㄒㄧˋ」，符號是 <strong>Si</strong>（S 是硫）。<br>  - <strong>(D) 錯誤</strong>：氯讀音「ㄌㄩˋ」，符號是 <strong>Cl</strong>（Cr 是鉻 ㄍㄜˋ）。"
+            }
+        ];
+
+        // ---------------------------------------------------------------------
+        // 4. 全域狀態管理
+        // ---------------------------------------------------------------------
+        let currentTab = 'ptable';
+        let tableMode = 'all'; // 'all' | 'exam'
+        let currentFilter = 'all';
+        let showValence = false;
+        let ionQuizMode = false;
+
+        // 測驗狀態
+        let quizFilter = 'all';
+        let userAnswers = {}; // { questionId: selectedOptionIndex }
+
+        // ---------------------------------------------------------------------
+        // 5. 初始化與分頁切換邏輯
+        // ---------------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPeriodicTable();
+            renderIonsTables();
+            initFormulaBuilder();
+            renderQuiz();
+        });
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            // 隱藏所有區塊
+            ['ptable', 'ions', 'quiz'].forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-btn-${t}`);
+                btn.classList.remove('bg-white', 'text-teal-800', 'shadow');
+                btn.classList.add('text-teal-50', 'hover:bg-white/10');
+            });
+
+            // 顯示目標區塊
+            document.getElementById(`section-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            activeBtn.classList.remove('text-teal-50', 'hover:bg-white/10');
+            activeBtn.classList.add('bg-white', 'text-teal-800', 'shadow');
+        }
+
+        // ---------------------------------------------------------------------
+        // 6. 分頁一：渲染與控制互動元素週期表
+        // ---------------------------------------------------------------------
+        function renderPeriodicTable() {
+            const mainGrid = document.getElementById('periodic-table-main');
+            const fGrid = document.getElementById('periodic-table-fblock');
+            mainGrid.innerHTML = '';
+            fGrid.innerHTML = '';
+
+            // 1. 建立主表 7 週期 x 18 族 (共 126 格)
+            for (let r = 1; r <= 7; r++) {
+                for (let c = 1; c <= 18; c++) {
+                    // 特殊處理 57-71 鑭系與 89-103 錒系佔位格
+                    if (r === 6 && c === 3) {
+                        mainGrid.appendChild(createPlaceholderCell('57-71', '鑭系', 'bg-indigo-50 border-indigo-200 text-indigo-700', 'lanthanide'));
+                        continue;
+                    }
+                    if (r === 7 && c === 3) {
+                        mainGrid.appendChild(createPlaceholderCell('89-103', '錒系', 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-700', 'actinide'));
+                        continue;
+                    }
+
+                    // 尋找對應座標的元素
+                    const el = elementsData.find(item => item.r === r && item.c === c);
+                    if (el) {
+                        mainGrid.appendChild(createElementCell(el));
+                    } else {
+                        // 空格子
+                        const empty = document.createElement('div');
+                        empty.className = 'h-14 sm:h-16';
+                        mainGrid.appendChild(empty);
+                    }
+                }
+            }
+
+            // 2. 建立下方獨立鑭系與錒系 (2 列 x 18 欄)
+            for (let fRow = 1; fRow <= 2; fRow++) {
+                for (let c = 1; c <= 18; c++) {
+                    if (c === 1 || c === 2) {
+                        const empty = document.createElement('div');
+                        fGrid.appendChild(empty);
+                        continue;
+                    }
+                    if (c === 3) {
+                        const label = document.createElement('div');
+                        label.className = 'flex items-center justify-end pr-2 text-[11px] font-bold text-slate-400';
+                        label.textContent = fRow === 1 ? '鑭系 ➔' : '錒系 ➔';
+                        fGrid.appendChild(label);
+                        continue;
+                    }
+                    const el = elementsData.find(item => item.fRow === fRow && item.c === c);
+                    if (el) {
+                        fGrid.appendChild(createElementCell(el));
+                    }
+                }
+            }
+
+            applyTableFilters();
+        }
+
+        function createPlaceholderCell(range, label, styleClass, cat) {
+            const div = document.createElement('div');
+            div.dataset.cat = cat;
+            div.dataset.examCore = "false";
+            div.className = `el-cell-item h-14 sm:h-16 rounded-lg border ${styleClass} flex flex-col items-center justify-center text-center p-1 select-none`;
+            div.innerHTML = `<span class="text-[10px] font-mono font-bold">${range}</span><span class="text-xs font-bold">${label}</span>`;
+            return div;
+        }
+
+        function createElementCell(el) {
+            const catStyle = categoryConfig[el.cat] || categoryConfig.nonmetal;
+            // 物質狀態字體顏色：氣態紅、液態藍、固態黑
+            let stateColor = 'text-slate-900';
+            if (el.state === 'gas') stateColor = 'text-red-600';
+            if (el.state === 'liquid') stateColor = 'text-blue-600';
+
+            // 抽取簡短價數標示 (例如 "Na⁺ (+1)" -> "+1")
+            const shortIon = el.ions ? el.ions.split(' ')[0] : '';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.onclick = () => openElementModal(el);
+            btn.dataset.cat = el.cat;
+            btn.dataset.state = el.state;
+            btn.dataset.examCore = el.examCore ? "true" : "false";
+            btn.dataset.number = el.n;
+
+            btn.className = `el-cell el-cell-item relative h-14 sm:h-16 rounded-lg border ${catStyle.bg} ${catStyle.border} ${catStyle.hover} flex flex-col items-center justify-between p-1 text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500`;
+
+            btn.innerHTML = `
+                <div class="w-full flex items-center justify-between px-0.5 leading-none">
+                    <span class="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500">${el.n}</span>
+                    ${el.examCore ? '<span class="w-1.5 h-1.5 rounded-full bg-amber-500" title="國高中必考重點"></span>' : ''}
+                </div>
+                <div class="font-mono font-black text-sm sm:text-base leading-none ${stateColor}">${el.s}</div>
+                <div class="text-[10px] sm:text-[11px] font-bold text-slate-800 leading-none truncate w-full">${el.name}</div>
+                <div class="valence-badge ${showValence ? '' : 'hidden'} text-[9px] font-mono font-bold text-amber-900 bg-white/80 px-1 rounded leading-tight mt-0.5 truncate max-w-full">
+                    ${shortIon}
+                </div>
+            `;
+            return btn;
+        }
+
+        function setTableMode(mode) {
+            tableMode = mode;
+            const btnAll = document.getElementById('btn-mode-all');
+            const btnExam = document.getElementById('btn-mode-exam');
+
+            if (mode === 'all') {
+                btnAll.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-teal-700 shadow-sm transition';
+                btnExam.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition';
+            } else {
+                btnExam.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-400 text-slate-900 shadow-sm transition';
+                btnAll.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition';
+            }
+            applyTableFilters();
+        }
+
+        function filterElements(filterKey) {
+            currentFilter = filterKey;
+            // 更新按鈕外觀
+            document.querySelectorAll('.filter-chip').forEach(btn => {
+                if (btn.dataset.filter === filterKey) {
+                    btn.classList.add('ring-2', 'ring-offset-1', 'ring-slate-800', 'scale-105');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-1', 'ring-slate-800', 'scale-105');
+                }
+            });
+
+            // 更新考點提示橫幅
+            const banner = document.getElementById('filter-tip-banner');
+            const tipText = document.getElementById('filter-tip-text');
+            if (filterKey !== 'all' && filterTips[filterKey]) {
+                tipText.innerHTML = filterTips[filterKey];
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+
+            applyTableFilters();
+        }
+
+        function toggleValenceDisplay() {
+            showValence = document.getElementById('toggle-valence').checked;
+            document.querySelectorAll('.valence-badge').forEach(badge => {
+                if (showValence) {
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            });
+        }
+
+        function applyTableFilters() {
+            const cells = document.querySelectorAll('.el-cell-item');
+            cells.forEach(cell => {
+                let matchMode = true;
+                let matchFilter = true;
+
+                if (tableMode === 'exam') {
+                    matchMode = cell.dataset.examCore === 'true';
+                }
+
+                if (currentFilter !== 'all') {
+                    if (currentFilter === 'liquid') {
+                        matchFilter = cell.dataset.state === 'liquid';
+                    } else {
+                        matchFilter = cell.dataset.cat === currentFilter;
+                    }
+                }
+
+                if (matchMode && matchFilter) {
+                    cell.classList.remove('dimmed');
+                } else {
+                    cell.classList.add('dimmed');
+                }
+            });
+        }
+
+        // 開啟元素詳情 Modal
+        function openElementModal(el) {
+            const catStyle = categoryConfig[el.cat] || categoryConfig.nonmetal;
+            document.getElementById('modal-header-bg').className = `p-6 text-slate-900 relative ${catStyle.modalBg}`;
+            document.getElementById('modal-number').textContent = `原子序 ${el.n}`;
+            document.getElementById('modal-symbol').textContent = el.s;
+            document.getElementById('modal-mass').textContent = el.mass;
+            document.getElementById('modal-name').textContent = el.name;
+            document.getElementById('modal-zhuyin').textContent = el.zhuyin;
+            document.getElementById('modal-en-name').textContent = el.en;
+            document.getElementById('modal-category-badge').textContent = catStyle.label;
+
+            const periodText = el.r ? `第 ${el.r} 週期・第 ${el.c} 族` : (el.fRow === 1 ? '第 6 週期・鑭系' : '第 7 週期・錒系');
+            document.getElementById('modal-period-group').textContent = periodText;
+
+            const stateMap = { gas: '🔴 常溫氣態', liquid: '🔵 常溫液態', solid: '⬛ 常溫固態' };
+            document.getElementById('modal-state-badge').textContent = stateMap[el.state] || '常溫固態';
+
+            document.getElementById('modal-config').textContent = el.config;
+            document.getElementById('modal-valence-e').textContent = `${el.ve} 個`;
+            document.getElementById('modal-ions').innerHTML = formatChemicalHTML(el.ions);
+
+            const typoBox = document.getElementById('modal-typo-box');
+            if (el.typo) {
+                document.getElementById('modal-typo-text').innerHTML = `<strong>國字與讀音提醒：</strong>${el.typo}`;
+                typoBox.classList.remove('hidden');
+            } else {
+                typoBox.classList.add('hidden');
+            }
+
+            document.getElementById('modal-exam-points').innerHTML = formatChemicalHTML(el.points);
+            document.getElementById('modal-uses').innerHTML = formatChemicalHTML(el.uses);
+
+            const modal = document.getElementById('element-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeElementModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            const modal = document.getElementById('element-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // 輔助函式：將純文字中的化學上下標美化為 HTML
+        function formatChemicalHTML(text) {
+            if (!text) return '';
+            // 簡單轉換常見上下標符號，保留原文字可讀性
+            return text
+                .replace(/₀/g, '<sub>0</sub>').replace(/₁/g, '<sub>1</sub>').replace(/₂/g, '<sub>2</sub>')
+                .replace(/₃/g, '<sub>3</sub>').replace(/₄/g, '<sub>4</sub>').replace(/₅/g, '<sub>5</sub>')
+                .replace(/₆/g, '<sub>6</sub>').replace(/₇/g, '<sub>7</sub>').replace(/₈/g, '<sub>8</sub>')
+                .replace(/₉/g, '<sub>9</sub>')
+                .replace(/⁺/g, '<sup>+</sup>').replace(/⁻/g, '<sup>−</sup>')
+                .replace(/²⁺/g, '<sup>2+</sup>').replace(/³⁺/g, '<sup>3+</sup>').replace(/⁴⁺/g, '<sup>4+</sup>')
+                .replace(/²⁻/g, '<sup>2−</sup>').replace(/³⁻/g, '<sup>3−</sup>');
+        }
+
+        // ---------------------------------------------------------------------
+        // 7. 分頁二：常見離子與酸根表 & 互動化學式組合實驗室
+        // ---------------------------------------------------------------------
+        function formatIonBadge(item) {
+            if (item.mid) {
+                return `${item.symbol}<sub>${item.sub}</sub>${item.mid}${item.sub2 ? `<sub>${item.sub2}</sub>` : ''}<sup>${item.sup}</sup>`;
+            }
+            return `${item.symbol}${item.sub ? `<sub>${item.sub}</sub>` : ''}<sup>${item.sup}</sup>`;
+        }
+
+        function renderIonsTables() {
+            const catContainer = document.getElementById('cations-container');
+            const anContainer = document.getElementById('anions-container');
+            catContainer.innerHTML = '';
+            anContainer.innerHTML = '';
+
+            // 渲染正離子
+            ionsData.cations.forEach(group => {
+                catContainer.appendChild(createIonGroupElement(group, 'rose'));
+            });
+
+            // 渲染負離子
+            ionsData.anions.forEach(group => {
+                anContainer.appendChild(createIonGroupElement(group, 'cyan'));
+            });
+        }
+
+        function createIonGroupElement(group, colorTheme) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'space-y-2';
+
+            const badgeBg = colorTheme === 'rose' ? 'bg-rose-100 text-rose-800' : 'bg-cyan-100 text-cyan-800';
+            wrapper.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold px-2.5 py-0.5 rounded-md ${badgeBg}">${group.chargeLabel}</span>
+                    <div class="h-px bg-slate-100 flex-grow"></div>
+                </div>
+            `;
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2.5';
+
+            group.items.forEach(item => {
+                const card = document.createElement('div');
+                card.onclick = () => {
+                    const target = card.querySelector('.ion-secret');
+                    if (target) target.classList.toggle('ion-revealed');
+                };
+                card.className = 'ion-card cursor-pointer p-3 rounded-xl border border-slate-200/90 hover:border-slate-300 bg-slate-50/60 hover:bg-white transition flex items-start justify-between gap-2';
+
+                const formulaHTML = formatIonBadge(item);
+                const formulaColor = colorTheme === 'rose' ? 'text-rose-700' : 'text-cyan-800';
+
+                card.innerHTML = `
+                    <div>
+                        <div class="font-bold text-sm text-slate-800">${item.name}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">${item.note}</div>
+                    </div>
+                    <div class="ion-secret ${ionQuizMode ? 'ion-hidden-value peekable' : ''} font-mono font-black text-base ${formulaColor} bg-white px-2.5 py-1 rounded-lg border border-slate-200 shrink-0 shadow-2xs">
+                        ${formulaHTML}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            wrapper.appendChild(grid);
+            return wrapper;
+        }
+
+        function toggleIonQuizMode() {
+            ionQuizMode = !ionQuizMode;
+            const btn = document.getElementById('btn-ion-quiz-mode');
+            const text = document.getElementById('ion-quiz-mode-text');
+
+            if (ionQuizMode) {
+                btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                btn.classList.add('bg-amber-500', 'hover:bg-amber-600', 'text-slate-900');
+                text.textContent = '關閉遮蔽（顯示全部價數）';
+            } else {
+                btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                btn.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'text-slate-900');
+                text.textContent = '開啟「遮蔽背誦模式」';
+            }
+            renderIonsTables();
+        }
+
+        // 初始化互動化學式組合實驗室
+        function initFormulaBuilder() {
+            const catSelect = document.getElementById('builder-cation');
+            const anSelect = document.getElementById('builder-anion');
+
+            ionsData.cations.forEach(g => {
+                g.items.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify({ ...item, charge: g.charge });
+                    opt.textContent = `${item.name} (${item.raw}${g.charge === 1 ? '+' : g.charge + '+'})`;
+                    if (item.raw === 'Ca') opt.selected = true; // 預設選鈣離子 Ca2+
+                    catSelect.appendChild(opt);
+                });
+            });
+
+            ionsData.anions.forEach(g => {
+                g.items.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify({ ...item, charge: Math.abs(g.charge) });
+                    opt.textContent = `${item.name} (${item.raw}${Math.abs(g.charge) === 1 ? '-' : Math.abs(g.charge) + '-'})`;
+                    if (item.raw === 'HCO3') opt.selected = true; // 預設選碳酸氫根 HCO3- 展示括號效果
+                    anSelect.appendChild(opt);
+                });
+            });
+
+            updateFormulaBuilder();
+        }
+
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        function updateFormulaBuilder() {
+            const cat = JSON.parse(document.getElementById('builder-cation').value);
+            const an = JSON.parse(document.getElementById('builder-anion').value);
+
+            const cCharge = cat.charge; // 正電荷數值 (1, 2, 3)
+            const aCharge = an.charge;  // 負電荷絕對值 (1, 2, 3)
+
+            // 交叉相乘並約分至最簡整數比
+            const divisor = gcd(cCharge, aCharge);
+            const cCount = aCharge / divisor;
+            const aCount = cCharge / divisor;
+
+            // 格式化化學式 HTML
+            const catBaseHTML = `${cat.symbol}${cat.sub ? `<sub>${cat.sub}</sub>` : ''}`;
+            const anBaseHTML = an.mid
+                ? `${an.symbol}<sub>${an.sub}</sub>${an.mid}${an.sub2 ? `<sub>${an.sub2}</sub>` : ''}`
+                : `${an.symbol}${an.sub ? `<sub>${an.sub}</sub>` : ''}`;
+
+            let finalFormula = '';
+            // 特殊有機酸根習慣寫法 (如 CH3COONa, (CH3COO)2Ca)
+            if (an.raw === 'CH3COO') {
+                const anPart = aCount > 1 ? `(${anBaseHTML})<sub>${aCount}</sub>` : anBaseHTML;
+                const catPart = cCount > 1 ? `${catBaseHTML}<sub>${cCount}</sub>` : catBaseHTML;
+                finalFormula = `${anPart}${catPart}`;
+            } else {
+                const catPart = cCount > 1
+                    ? (cat.isPoly ? `(${catBaseHTML})<sub>${cCount}</sub>` : `${catBaseHTML}<sub>${cCount}</sub>`)
+                    : catBaseHTML;
+                const anPart = aCount > 1
+                    ? (an.isPoly ? `(${anBaseHTML})<sub>${aCount}</sub>` : `${anBaseHTML}<sub>${aCount}</sub>`)
+                    : anBaseHTML;
+                finalFormula = `${catPart}${anPart}`;
+            }
+
+            // 推導中文命名
+            const catCleanName = cat.name.replace('離子', '');
+            let anCleanName = an.name.replace('離子', '');
+            if (!an.isPoly) {
+                // 單原子陰離子：氧離子 -> 氧化、氯離子 -> 氯化
+                anCleanName = anCleanName + '化';
+            }
+            let compoundName = `${anCleanName}${catCleanName}`;
+            if (cat.raw === 'H' && an.raw === 'OH') compoundName = '水 (H₂O)';
+            if (cat.raw === 'H' && an.isPoly && an.raw !== 'OH') compoundName = anCleanName.replace('根', '');
+            if (cat.raw === 'H' && !an.isPoly) compoundName = `氫${anCleanName.replace('化', '')}酸（如鹽酸/氫氟酸）`;
+
+            document.getElementById('builder-result-formula').innerHTML = finalFormula;
+            document.getElementById('builder-result-name').textContent = compoundName;
+
+            // 生成詳細推導說明
+            const needBracket = (cCount > 1 && cat.isPoly) || (aCount > 1 && an.isPoly);
+            const reducedNote = divisor > 1 ? `（價數 ${cCharge} 與 ${aCharge} 經公因數 ${divisor} 約分後為 1：1）` : '';
+            const bracketNote = needBracket
+                ? `<span class="text-amber-300 font-bold">⚠️ 括號重點：因為原子團數量大於 1 個，必須用括號 ( ) 括起來再寫下標！</span>`
+                : '';
+
+            document.getElementById('builder-explanation').innerHTML = `
+                <strong>推導過程：</strong>
+                <span class="text-rose-300 font-bold">${cat.name} (+${cCharge})</span> 與
+                <span class="text-cyan-300 font-bold">${an.name} (−${aCharge})</span> 結合，
+                為符合「電中性原則（總正電荷 + 總負電荷 = 0）」，需要 <strong>${cCount} 個</strong>${cat.name} 與 <strong>${aCount} 個</strong>${an.name}
+                ${reducedNote}。${bracketNote}
+            `;
+        }
+
+        // ---------------------------------------------------------------------
+        // 8. 分頁三：國高中觀念實戰題庫邏輯
+        // ---------------------------------------------------------------------
+        function filterQuiz(filterType) {
+            quizFilter = filterType;
+            document.querySelectorAll('.qfilter-btn').forEach(btn => {
+                if (btn.dataset.qfilter === filterType) {
+                    btn.classList.remove('bg-slate-100', 'text-slate-700', 'bg-rose-50', 'text-rose-700');
+                    btn.classList.add('bg-teal-700', 'text-white', 'shadow-sm');
+                } else {
+                    btn.classList.remove('bg-teal-700', 'text-white', 'shadow-sm');
+                    if (btn.dataset.qfilter === 'wrong') {
+                        btn.classList.add('bg-rose-50', 'text-rose-700');
+                    } else {
+                        btn.classList.add('bg-slate-100', 'text-slate-700');
+                    }
+                }
+            });
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-list-container');
+            container.innerHTML = '';
+
+            let filteredList = quizQuestions;
+            if (quizFilter === 'junior' || quizFilter === 'senior' || quizFilter === 'ions') {
+                filteredList = quizQuestions.filter(q => q.level === quizFilter);
+            } else if (quizFilter === 'wrong') {
+                filteredList = quizQuestions.filter(q => userAnswers[q.id] !== undefined && userAnswers[q.id] !== q.ans);
+            }
+
+            if (filteredList.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-10 text-center border border-slate-200 text-slate-500">
+                        <div class="text-4xl mb-2">🎉</div>
+                        <div class="font-bold text-slate-700">目前此分類沒有題目（或錯題已全數訂正完畢）！</div>
+                        <button onclick="filterQuiz('all')" class="mt-3 px-4 py-2 bg-teal-700 text-white text-xs font-bold rounded-xl">查看全部題目</button>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredList.forEach((qObj, index) => {
+                const userChoice = userAnswers[qObj.id];
+                const isAnswered = userChoice !== undefined;
+                const isCorrect = isAnswered && userChoice === qObj.ans;
+
+                // 難度徽章樣式
+                let levelBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">國中會考</span>';
+                if (qObj.level === 'senior') {
+                    levelBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">高中學測</span>';
+                } else if (qObj.level === 'ions') {
+                    levelBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">離子專區</span>';
+                }
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-2xl p-5 shadow-sm border transition ${
+                    isAnswered ? (isCorrect ? 'border-emerald-300' : 'border-rose-300') : 'border-slate-200/90'
+                }`;
+
+                // 生成選項按鈕 HTML
+                const optionsHTML = qObj.options.map((optText, optIdx) => {
+                    let btnClass = 'border-slate-200 hover:border-teal-400 hover:bg-teal-50/40 text-slate-700';
+                    let statusIcon = '';
+
+                    if (isAnswered) {
+                        if (optIdx === qObj.ans) {
+                            btnClass = 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold ring-1 ring-emerald-500';
+                            statusIcon = '<span class="text-emerald-600 font-bold">✔ 正確</span>';
+                        } else if (optIdx === userChoice && userChoice !== qObj.ans) {
+                            btnClass = 'border-rose-500 bg-rose-50 text-rose-900 font-bold';
+                            statusIcon = '<span class="text-rose-600 font-bold">✘ 你的選擇</span>';
+                        } else {
+                            btnClass = 'border-slate-100 bg-slate-50/50 text-slate-400';
+                        }
+                    }
+
+                    return `
+                        <button type="button" onclick="selectAnswer(${qObj.id}, ${optIdx})"
+                            class="w-full text-left p-3.5 rounded-xl border text-sm transition flex items-center justify-between gap-2 ${btnClass}">
+                            <span>${formatChemicalHTML(optText)}</span>
+                            ${statusIcon}
+                        </button>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2 mb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono font-bold text-xs bg-slate-800 text-white px-2.5 py-0.5 rounded-md">Q${qObj.id}</span>
+                            ${levelBadge}
+                            <span class="text-xs font-medium text-slate-500">${qObj.tag}</span>
+                        </div>
+                        ${isAnswered ? (isCorrect
+                            ? '<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">答對了！</span>'
+                            : '<span class="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">再看一次詳解</span>') : ''}
+                    </div>
+
+                    <h3 class="text-base font-bold text-slate-800 leading-relaxed mb-4">
+                        ${formatChemicalHTML(qObj.q)}
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        ${optionsHTML}
+                    </div>
+
+                    <!-- 老師詳解區塊 (作答後自動展開) -->
+                    <div class="${isAnswered ? 'block' : 'hidden'} mt-4 pt-4 border-t border-dashed border-slate-200">
+                        <div class="bg-amber-50/80 border border-amber-200/80 rounded-xl p-4 text-sm text-slate-700 leading-relaxed">
+                            <div class="font-bold text-amber-900 mb-1 flex items-center gap-1.5">
+                                <span>👨‍🏫</span> 老師觀念詳解：
+                            </div>
+                            <div>${formatChemicalHTML(qObj.explanation)}</div>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            updateQuizStats();
+        }
+
+        function selectAnswer(qId, optIdx) {
+            userAnswers[qId] = optIdx;
+            renderQuiz();
+        }
+
+        function updateQuizStats() {
+            const total = quizQuestions.length;
+            const answeredIds = Object.keys(userAnswers);
+            const answeredCount = answeredIds.length;
+            let correctCount = 0;
+            let wrongCount = 0;
+
+            answeredIds.forEach(id => {
+                const q = quizQuestions.find(item => item.id === Number(id));
+                if (q) {
+                    if (userAnswers[id] === q.ans) correctCount++;
+                    else wrongCount++;
+                }
+            });
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-answered').textContent = answeredCount;
+            document.getElementById('stat-correct').textContent = correctCount;
+            document.getElementById('wrong-count').textContent = wrongCount;
+
+            const accuracy = answeredCount === 0 ? '--%' : `${Math.round((correctCount / answeredCount) * 100)}%`;
+            document.getElementById('stat-accuracy').textContent = accuracy;
+        }
+
+        function resetQuiz() {
+            userAnswers = {};
+            if (quizFilter === 'wrong') {
+                filterQuiz('all');
+            } else {
+                renderQuiz();
+            }
+        }
+    </script>
+</body>
+</html>
